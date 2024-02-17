@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.5)
+project(ORTExample LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Optional
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") # Optional
+
+find_package(OpenCV REQUIRED) # Need `CMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR`
+
+find_package(CUDA REQUIRED)
+message(STATUS "CUDA found: ${CUDA_VERSION_STRING} ${CUDA_INCLUDE_DIRS} ${CUDA_LIBRARIES}")
+
+
+find_library(LIBNVINFER NAME nvinfer HINTS ${TENSORRT_LIB_PATH} REQUIRED)
+find_library(LIBNVONNXPARSER NAME nvonnxparser HINTS ${TENSORRT_LIB_PATH} REQUIRED)
+find_library(LIBNVINFER_PLUGIN NAME nvinfer_plugin HINTS ${TENSORRT_LIB_PATH} REQUIRED)
+message(STATUS "TensorRT found: ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN}")
+
+cuda_add_executable(main main.cpp)
+target_link_libraries(main ${OpenCV_LIBS} ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN})
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})
