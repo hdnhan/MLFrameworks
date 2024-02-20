@@ -1,6 +1,6 @@
 # Computer Vision Example
 ```python
-# Gen
+# Generate ONNX model from PyTorch
 from ultralytics import YOLO
 model = YOLO('yolov8n.pt')
 model.export(format='onnx', opset=12)
@@ -188,3 +188,20 @@ docker run --rm -it --gpus all -v $(pwd):/workspace tensorrt bash /workspace/Ten
     <td>2.791</td>
   </tr>
 </table>
+
+
+## Triton
+```bash
+docker build --progress=plain -t triton-server -f Triton/dockerfiles/Dockerfile.server .
+docker build --progress=plain -t triton-client -f Triton/dockerfiles/Dockerfile.client .
+
+mkdir -p Triton/model_repository/ensemble/1 Triton/model_repository/yolov8n/1
+# docker run --rm -it --gpus all -v $(pwd):/workspace triton-server bash
+/usr/src/tensorrt/bin/trtexec --onnx=/workspace/Assets/yolov8n.onnx --saveEngine=/workspace/Triton/model_repository/yolov8n/1/model.plan --explicitBatch
+
+# Start Triton Inference Server
+docker run --gpus=all -it --rm -p8000:8000 -p8001:8001 -p8002:8002 -v $(pwd)/Triton/model_repository:/models triton-server tritonserver --model-repository=/models
+
+# Run inference
+docker run -it --rm --network host -v $(pwd):/workspace triton-client python3 /workspace/Triton/client.py
+```
