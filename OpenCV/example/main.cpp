@@ -1,5 +1,8 @@
 #include <chrono>
+#include <filesystem>
 #include <opencv2/opencv.hpp>
+
+namespace fs = std::filesystem;
 
 /**
  * Preprocess the input image
@@ -128,21 +131,23 @@ void warm_up(cv::dnn::Net& model) {
 }
 
 void run(bool use_cuda, bool verbose = false) {
+    auto root_dir = fs::current_path().parent_path().parent_path().string();
+
     // Load the network
-    cv::dnn::Net model = cv::dnn::readNet("/workspace/Assets/yolov8n.onnx");
+    cv::dnn::Net model = cv::dnn::readNet(root_dir + "/Assets/yolov8n.onnx");
 
     // Warm up
     for (int i = 0; i < 10; ++i) warm_up(model);
 
-    std::string out_path = "/workspace/Results/opencv-cpp-cpu.mp4";
+    std::string out_path = root_dir + "/Results/opencv-cpp-cpu.mp4";
     if (use_cuda) {
         model.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
         model.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-        out_path = "/workspace/Results/opencv-cpp-cuda.mp4";
+        out_path = root_dir + "/Results/opencv-cpp-cuda.mp4";
     }
 
     // Load video
-    cv::VideoCapture cap("/workspace/Assets/video.mp4");
+    cv::VideoCapture cap(root_dir + "/Assets/video.mp4");
     cv::VideoWriter out;
 
     cv::Size newShape(640, 640);  // (width, height)

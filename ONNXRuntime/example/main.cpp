@@ -1,11 +1,23 @@
 #include <chrono>
+#include <filesystem>
 #include <opencv2/opencv.hpp>
 
 #include "onnxruntime_cxx_api.h"
+
 #ifdef USE_TENSORRT
 #include <tensorrt_provider_factory.h>
 #include <tensorrt_provider_options.h>
 #endif
+
+#ifdef USE_OPENVINO
+#include <openvino_provider_factory.h>
+#endif
+
+#ifdef USE_COREML
+#include <coreml_provider_factory.h>
+#endif
+
+namespace fs = std::filesystem;
 
 class OrtSessionManager {
    public:
@@ -64,13 +76,14 @@ class OrtSessionManager {
 
         if (ep == "TensorrtExecutionProvider") {
 #ifdef USE_TENSORRT
+            auto root_dir = fs::current_path().parent_path().parent_path().string();
             const auto& api = Ort::GetApi();
             OrtTensorRTProviderOptionsV2* tensorrt_options;
             Ort::ThrowOnError(api.CreateTensorRTProviderOptions(&tensorrt_options));
             tensorrt_options->device_id = 0;
             tensorrt_options->trt_max_workspace_size = 3221225472;  // 3 * 1024 * 1024 * 1024
             tensorrt_options->trt_engine_cache_enable = true;
-            tensorrt_options->trt_engine_cache_path = "/workspace/Assets";
+            tensorrt_options->trt_engine_cache_path = root_dir + "/Assets";
             Ort::ThrowOnError(
                 api.SessionOptionsAppendExecutionProvider_TensorRT_V2(options, tensorrt_options));
 #else
@@ -81,6 +94,18 @@ class OrtSessionManager {
             Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(options, 0));
 #else
             std::cout << "CUDA is not supported." << std::endl;
+#endif
+        } else if (ep == "OpenVINOExecutionProvider") {
+#ifdef USE_OPENVINO
+            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(options, "CPU_FP32"));
+#else
+            std::cout << "OpenVINO is not supported." << std::endl;
+#endif
+        } else if (ep == "CoreMLExecutionProvider") {
+#ifdef USE_COREML
+            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CoreML(options, 0));
+#else
+            std::cout << "CoreML is not supported." << std::endl;
 #endif
         } else if (ep == "CPUExecutionProvider") {
             // CPUExecutionProvider is the default provider
@@ -251,14 +276,15 @@ void warm_up(OrtInference& OrtSess) {
 }
 
 void run(std::string const& ep, bool verbose = false) {
-    OrtInference OrtSess("/workspace/Assets/yolov8n.onnx", ep);
-    std::string out_path = "/workspace/Results/onnxruntime-cpp-" + ep + ".mp4";
+    auto root_dir = fs::current_path().parent_path().parent_path().string();
+    OrtInference OrtSess(root_dir + "/Assets/yolov8n.onnx", ep);
+    std::string out_path = root_dir + "/Results/onnxruntime-cpp-" + ep + ".mp4";
 
     // Warm up
     for (int i = 0; i < 10; ++i) warm_up(OrtSess);
 
     // Load video
-    cv::VideoCapture cap("/workspace/Assets/video.mp4");
+    cv::VideoCapture cap(root_dir + "/Assets/video.mp4");
     cv::VideoWriter out;
 
     cv::Size newShape(640, 640);  // (width, height)

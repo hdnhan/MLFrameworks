@@ -1,9 +1,12 @@
 import typing as T
+from pathlib import Path
 from time import perf_counter
 
 import cv2
 import numpy as np
 import onnxruntime as ort
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
 
 
 def preprocess(image: np.ndarray, new_shape: T.Tuple[int, int]) -> np.ndarray:
@@ -28,9 +31,7 @@ def preprocess(image: np.ndarray, new_shape: T.Tuple[int, int]) -> np.ndarray:
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
 
-    image = cv2.copyMakeBorder(
-        image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)
-    )
+    image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114))
     image = image.transpose(2, 0, 1)
     image = image[np.newaxis, ...].astype(np.float32) / 255.0
     return image
@@ -101,9 +102,7 @@ def postprocess(
     return bboxes, scores, class_ids
 
 
-def scale_boxes(
-    bboxes: np.ndarray, new_shape: T.Tuple[int, int], ori_shape: T.Tuple[int, int]
-) -> np.ndarray:
+def scale_boxes(bboxes: np.ndarray, new_shape: T.Tuple[int, int], ori_shape: T.Tuple[int, int]) -> np.ndarray:
     """Rescale bounding boxes to the original shape.
 
     Preprocess: ori_shape => new_shape
@@ -118,9 +117,7 @@ def scale_boxes(
         np.ndarray: The rescaled and clipped bounding boxes.
     """
     # calculate from ori_shape
-    gain = min(
-        new_shape[0] / ori_shape[0], new_shape[1] / ori_shape[1]
-    )  # gain  = old / new
+    gain = min(new_shape[0] / ori_shape[0], new_shape[1] / ori_shape[1])  # gain  = old / new
     pad = round((new_shape[1] - ori_shape[1] * gain) / 2 - 0.1), round(
         (new_shape[0] - ori_shape[0] * gain) / 2 - 0.1
     )  # wh padding
@@ -187,23 +184,27 @@ def main(ep: str, verbose: bool = False) -> None:
             "device_id": 0,
             "trt_max_workspace_size": 3 * 1024 * 1024 * 1024,
             "trt_engine_cache_enable": True,
-            "trt_engine_cache_path": "/workspace/Assets",
+            "trt_engine_cache_path": f"{ROOT_DIR}/Assets",
+        }
+    elif ep == "CoreMLExecutionProvider":
+        provider_options = {
+            "coreml_flags": 0,
         }
 
     session = ort.InferenceSession(
-        "/workspace/Assets/yolov8n.onnx",
+        f"{ROOT_DIR}/Assets/yolov8n.onnx",
         options,
         providers=[ep],
         provider_options=[provider_options],
     )
-    out_path = f"/workspace/Results/onnxruntime-python-{ep}.mp4"
+    out_path = f"{ROOT_DIR}/Results/onnxruntime-python-{ep}.mp4"
 
     # Warmup
     for _ in range(10):
         warmup(session)
 
     # Load video
-    cap = cv2.VideoCapture("/workspace/Assets/video.mp4")
+    cap = cv2.VideoCapture(f"{ROOT_DIR}/Assets/video.mp4")
     out = None
 
     new_shape = (640, 640)  # (height, width)

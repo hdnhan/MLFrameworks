@@ -8,7 +8,7 @@ model.export(format='onnx', opset=12)
 
 Run inference on `yolov8n.onnx` and `g4dn.xlarge` (NVIDIA T4) using
 - OpenCV: CPU and CUDA
-- ONNXRuntime with different Execution Providers: CPU, CUDA, DNNL, OpenVINO, TensorRT
+- ONNXRuntime with different Execution Providers: CPU, CUDA, CoreML, OpenVINO, TensorRT
 - TensorRT
 
 ## Download video
@@ -110,6 +110,11 @@ docker run --rm -it --gpus all -v $(pwd):/workspace onnxruntime-cuda bash /works
 docker build --progress=plain -t onnxruntime-tensorrt -f ONNXRuntime/dockerfiles/Dockerfile.tensorrt .
 docker run --rm -it --gpus all -v $(pwd):/workspace onnxruntime-tensorrt python3 /workspace/ONNXRuntime/example/main.py
 docker run --rm -it --gpus all -v $(pwd):/workspace onnxruntime-tensorrt bash /workspace/ONNXRuntime/example/run.sh
+
+# OpenVINO (ONNXRuntime v1.6.3)
+docker build --progress=plain -t onnxruntime-openvino -f ONNXRuntime/dockerfiles/Dockerfile.openvino .
+docker run --rm -it -v $(pwd):/workspace onnxruntime-openvino python3 /workspace/ONNXRuntime/example/main.py
+docker run --rm -it -v $(pwd):/workspace onnxruntime-openvino bash /workspace/ONNXRuntime/example/run.sh
 ```
 
 <table>
@@ -221,3 +226,47 @@ docker run --gpus=all -it --rm -p8000:8000 -p8001:8001 -p8002:8002 -v $(pwd)/Tri
 # Run inference
 docker run -it --rm --network host -v $(pwd):/workspace triton-client python3 /workspace/Triton/client.py
 ```
+
+## ONNXRuntime and OpenCV on Intel MacOS
+```bash
+# Virtual environment
+conda create -n cv python=3.8
+conda activate cv
+```
+
+```bash
+# OpenCV
+bash osx_opencv.sh
+cd OpenCV/example
+
+## Python
+python main.py
+
+## C++: Export OPENCV_INSTALL_DIR
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
+cmake --build build
+./build/main
+```
+
+```bash
+# ONNXRuntime CoreML
+bash osx_ort_coreml.sh
+cd ONNXRuntime/example
+
+# Python
+python main.py
+
+# C++: Export OPENCV_INSTALL_DIR and ORT_INSTALL_DIR
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR -DORT_INSTALL_DIR=$ORT_INSTALL_DIR
+cmake --build build
+./build/main
+```
+Note: Not all operators are supported in CoreML.
+- `Resnet18.onnx` (1, 3, 640, 640) => CoreML CPU is 2x faster than CPU.
+- `YOLOv8n.onnx` (1, 3, 640, 640) => CoreML CPU is 2x slower than CPU because of some unsupported operators.
+
+
+Next:
+- Update ONNXRuntime and OpenCV to newest version
+- Try OpenCV with OpenVINO
+- Optimize preprocessing and postprocessing in C++ version.

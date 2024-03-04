@@ -1,9 +1,11 @@
 import typing as T
+from pathlib import Path
 from time import perf_counter
 
 import cv2
 import numpy as np
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
 
 def preprocess(image: np.ndarray, new_shape: T.Tuple[int, int]) -> np.ndarray:
     """Preprocess the input image.
@@ -183,20 +185,20 @@ def warmup(model: cv2.dnn.Net) -> None:
 
 def main(use_cuda: bool, verbose: bool = False) -> None:
     # Load the network
-    model = cv2.dnn.readNet("/workspace/Assets/yolov8n.onnx")
+    model = cv2.dnn.readNet(f"{ROOT_DIR}/Assets/yolov8n.onnx")
 
     # Warmup
     for _ in range(10):
         warmup(model)
 
-    out_path = "/workspace/Results/opencv-python-cpu.mp4"
+    out_path = f"{ROOT_DIR}/Results/opencv-python-cpu.mp4"
     if use_cuda:
         model.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         model.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-        out_path = "/workspace/Results/opencv-python-cuda.mp4"
+        out_path = f"{ROOT_DIR}/Results/opencv-python-cuda.mp4"
 
     # Load video
-    cap = cv2.VideoCapture("/workspace/Assets/video.mp4")
+    cap = cv2.VideoCapture(f"{ROOT_DIR}/Assets/video.mp4")
     out = None
 
     new_shape = (640, 640)  # (height, width)

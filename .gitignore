@@ -5,3 +5,5 @@ Assets/*.engine
 Results
 viz.ipynb
 Triton/model_repository/yolov8n/1/*
+ort
+ocv

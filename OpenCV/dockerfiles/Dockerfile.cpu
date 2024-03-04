@@ -15,13 +15,13 @@ RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/openc
 
 RUN cd /tmp/opencv && mkdir -p build && cd build && \
     cmake -S .. -B . \
-    -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=$OPENCV_INSTALL_DIR \
-    -D INSTALL_PYTHON_EXAMPLES=OFF \
-    -D INSTALL_C_EXAMPLES=OFF \
-    -D BUILD_EXAMPLES=OFF \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=/tmp/opencv_contrib/modules && \
+    -DCMAKE_BUILD_TYPE=RELEASE \
+    -DCMAKE_INSTALL_PREFIX=$OPENCV_INSTALL_DIR \
+    -DINSTALL_PYTHON_EXAMPLES=OFF \
+    -DINSTALL_C_EXAMPLES=OFF \
+    -DBUILD_EXAMPLES=OFF \
+    -DOPENCV_ENABLE_NONFREE=ON \
+    -DOPENCV_EXTRA_MODULES_PATH=/tmp/opencv_contrib/modules && \
     make -j$(nproc) && \
     make install && \
     ldconfig
