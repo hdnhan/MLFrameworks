@@ -1,9 +1,7 @@
 # Computer Vision Examples
 ```python
 # Generate ONNX model from PyTorch
-from ultralytics import YOLO
-model = YOLO('yolov8n.pt')
-model.export(format='onnx', opset=12)
+cd Assets && python export.py
 ```
 
 Run inference on `yolov8n.onnx` and `g4dn.xlarge` (NVIDIA T4) using
