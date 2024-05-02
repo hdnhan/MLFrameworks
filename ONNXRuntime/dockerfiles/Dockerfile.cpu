@@ -7,11 +7,12 @@ RUN pip3 install cmake numpy packaging setuptools wheel
 
 # Install ONNXRuntime: build-wheel needs python3-dev, numpy, packaging, setuptools, wheel
 ENV ORT_INSTALL_DIR /onnxruntime
-ENV ORT_RELEASE_TAG v1.14.1
+ENV ORT_RELEASE_TAG v1.16.3
 RUN git clone --recursive -b $ORT_RELEASE_TAG https://github.com/microsoft/onnxruntime.git /tmp/onnxruntime
 
 RUN cd /tmp/onnxruntime && \
     ./build.sh --config Release \
+    --allow_running_as_root \
     --build_shared_lib \
     --build_wheel \
     --update \

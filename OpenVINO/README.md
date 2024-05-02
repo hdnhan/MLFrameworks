@@ -1,0 +1,1 @@
+# https://docs.openvino.ai/2024/get-started/install-openvino.html

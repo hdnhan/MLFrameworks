@@ -9,7 +9,7 @@ RUN pip3 install cmake numpy
 
 # Install opencv: python version needs python3-dev, numpy
 ENV OPENCV_INSTALL_DIR /opencv
-ENV OPENCV_RELEASE_TAG 4.7.0
+ENV OPENCV_RELEASE_TAG 4.9.0
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.git /tmp/opencv
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/opencv_contrib
 
@@ -21,6 +21,7 @@ RUN cd /tmp/opencv && mkdir -p build && cd build && \
     -D INSTALL_C_EXAMPLES=OFF \
     -D BUILD_EXAMPLES=OFF \
     -D OPENCV_ENABLE_NONFREE=ON \
+    -DPYTHON3_EXECUTABLE=$(which python3) \
     -D WITH_CUDA=ON \
     -D OPENCV_EXTRA_MODULES_PATH=/tmp/opencv_contrib/modules && \
     make -j$(nproc) && \

@@ -1,10 +1,5 @@
 .DS_Store
 __pycache__
 .vscode
-Assets/*.engine
-Assets/*.pt
 Results
-viz.ipynb
 Triton/model_repository/yolov8n/1/*
-ort
-ocv

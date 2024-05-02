@@ -1,9 +1,9 @@
 #!/bin/bash
 
-pushd /workspace/TensorRT/example
+pushd /workspace/TensorRT
 
-cmake -S . -B /tmp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
-cmake --build /tmp/build
-/tmp/build/main
+cmake -S example -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
+cmake --build build
+./build/main
 
 # popd

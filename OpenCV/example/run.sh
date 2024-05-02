@@ -1,9 +1,9 @@
 #!/bin/bash
 
-pushd /workspace/OpenCV/example
+pushd /workspace/OpenCV
 
-cmake -S . -B /tmp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
-cmake --build /tmp/build
-/tmp/build/main
+cmake -S example -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
+cmake --build build --config Release
+./build/main
 
 # popd

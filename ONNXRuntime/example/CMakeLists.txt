@@ -11,7 +11,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") # Optional
 find_package(OpenCV REQUIRED) # Need `CMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR`
 # find_package(onnxruntime REQUIRED) # not working
 find_library(ORT_LIBRARY NAME onnxruntime HINTS ${ORT_INSTALL_DIR}/lib REQUIRED)
-set(ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime/core/session) # older version
 
 find_package(CUDA)
 if(CUDA_FOUND)
@@ -21,16 +20,16 @@ else()
   message(STATUS "CUDA not found")
 endif()
 
-if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/openvino_provider_factory.h) # v1.16.3
-  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime) # v1.16.3
+if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/openvino_provider_factory.h)
+  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime)
   message(STATUS "OpenVINO found")
   add_compile_definitions(USE_OPENVINO)
 else()
   message(STATUS "OpenVINO not found")
 endif()
 
-if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/coreml_provider_factory.h) # v1.16.3
-  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime) # v1.16.3
+if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/coreml_provider_factory.h)
+  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime)
   message(STATUS "CoreML found")
   add_compile_definitions(USE_COREML)
 else()
@@ -48,6 +47,6 @@ else()
   message(STATUS "TensorRT not found")
 endif()
 
-add_executable(main main.cpp)
+add_executable(main cpp/main.cpp ../../Common/cpp/base.cpp)
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ${ORT_INCLUDE_DIRS} ../../Common/cpp)
 target_link_libraries(main ${OpenCV_LIBS} ${ORT_LIBRARY})
-target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ${ORT_INCLUDE_DIRS})
