@@ -256,4 +256,3 @@ class Base:
             cap.release()
         if writer.isOpened():
             writer.release()
-

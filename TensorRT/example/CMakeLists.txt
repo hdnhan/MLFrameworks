@@ -19,6 +19,6 @@ find_library(LIBNVONNXPARSER NAME nvonnxparser HINTS ${TENSORRT_LIB_PATH} REQUIR
 find_library(LIBNVINFER_PLUGIN NAME nvinfer_plugin HINTS ${TENSORRT_LIB_PATH} REQUIRED)
 message(STATUS "TensorRT found: ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN}")
 
-cuda_add_executable(main main.cpp)
+cuda_add_executable(main cpp/main.cpp ../../Common/cpp/base.cpp)
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ../../Common/cpp)
 target_link_libraries(main ${OpenCV_LIBS} ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN})
-target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})

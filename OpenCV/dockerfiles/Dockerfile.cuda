@@ -9,7 +9,8 @@ RUN pip3 install cmake numpy
 
 # Install opencv: python version needs python3-dev, numpy
 ENV OPENCV_INSTALL_DIR /opencv
-ENV OPENCV_RELEASE_TAG 4.9.0
+# For some reason, >4.7.0,<=4.9.0 DNN CUDA give empty results
+ENV OPENCV_RELEASE_TAG 4.7.0
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.git /tmp/opencv
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/opencv_contrib
 

@@ -11,7 +11,7 @@ else:
 model = YOLO("yolov8n.pt")
 
 print("\nONNX...")
-model.export(format="onnx", device=device, opset=19)
+model.export(format="onnx", device=device, opset=12) # 12 OpenCV DNN 4.7.0
 
 print("\nTorchScript...")
 model.export(format="torchscript", device=device)

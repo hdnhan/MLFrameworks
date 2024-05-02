@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") # Optional
 find_package(OpenCV REQUIRED) # Need `CMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR`
 # find_package(onnxruntime REQUIRED) # not working
 find_library(ORT_LIBRARY NAME onnxruntime HINTS ${ORT_INSTALL_DIR}/lib REQUIRED)
+set(ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime)
 
 find_package(CUDA)
 if(CUDA_FOUND)
@@ -21,7 +22,6 @@ else()
 endif()
 
 if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/openvino_provider_factory.h)
-  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime)
   message(STATUS "OpenVINO found")
   add_compile_definitions(USE_OPENVINO)
 else()
@@ -29,7 +29,6 @@ else()
 endif()
 
 if(EXISTS ${ORT_INSTALL_DIR}/include/onnxruntime/coreml_provider_factory.h)
-  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime)
   message(STATUS "CoreML found")
   add_compile_definitions(USE_COREML)
 else()
@@ -42,7 +41,6 @@ find_library(LIBNVINFER_PLUGIN NAME nvinfer_plugin HINTS ${TENSORRT_LIB_PATH})
 if(LIBNVINFER AND LIBNVONNXPARSER AND LIBNVINFER_PLUGIN)
   message(STATUS "TensorRT found: ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN}")
   add_compile_definitions(USE_TENSORRT)
-  list(APPEND ORT_INCLUDE_DIRS ${ORT_INSTALL_DIR}/include/onnxruntime/core/providers/tensorrt)
 else()
   message(STATUS "TensorRT not found")
 endif()

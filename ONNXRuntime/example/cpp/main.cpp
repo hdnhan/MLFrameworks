@@ -5,7 +5,6 @@
 
 #ifdef USE_TENSORRT
 #include <tensorrt_provider_factory.h>
-#include <tensorrt_provider_options.h>
 #endif
 
 #ifdef USE_OPENVINO
@@ -30,11 +29,11 @@ static auto rootDir = fs::current_path().parent_path().string();
 class ONNXRuntime : public Base {
   public:
     ONNXRuntime(std::string const &ep) {
+        // ORT_LOGGING_LEVEL_WARNING, ORT_LOGGING_LEVEL_INFO, ORT_LOGGING_LEVEL_VERBOSE
+        env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, "LOG");
         // Create an ONNX Runtime session and load the model into it
         Ort::SessionOptions options;
         setup_provider(options, ep);
-        // ORT_LOGGING_LEVEL_WARNING, ORT_LOGGING_LEVEL_INFO, ORT_LOGGING_LEVEL_VERBOSE
-        env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, "LOG");
         try {
             session = Ort::Session(env, (rootDir + "/Assets/yolov8n.onnx").c_str(), options);
         } catch (Ort::Exception const &e) {
@@ -78,10 +77,10 @@ class ONNXRuntime : public Base {
             const auto &api = Ort::GetApi();
             OrtTensorRTProviderOptionsV2 *tensorrt_options;
             Ort::ThrowOnError(api.CreateTensorRTProviderOptions(&tensorrt_options));
-            tensorrt_options->device_id = 0;
-            tensorrt_options->trt_max_workspace_size = 3221225472; // 3 * 1024 * 1024 * 1024
-            tensorrt_options->trt_engine_cache_enable = true;
-            tensorrt_options->trt_engine_cache_path = root_dir + "/Assets";
+            std::vector<const char *> option_keys = {"device_id", "trt_max_workspace_size",
+                                                     "trt_engine_cache_enable", "trt_engine_cache_path"};
+            std::vector<const char *> option_values = {"0", "3221225472", "1",
+                                                       (root_dir + "/Assets").c_str()};
             Ort::ThrowOnError(
                 api.SessionOptionsAppendExecutionProvider_TensorRT_V2(options, tensorrt_options));
 #else
@@ -130,6 +129,7 @@ class ONNXRuntime : public Base {
             for (auto e : outputDims[0])
                 outputDim.push_back(static_cast<int>(e));
             cv::Mat output(outputDim.size(), outputDim.data(), CV_32F, outputTensorValues);
+            outputs.clear();
             outputs.emplace_back(output);
 
         } catch (Ort::Exception const &e) {
