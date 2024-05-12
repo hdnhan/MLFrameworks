@@ -52,6 +52,11 @@ valgrind --leak-check=full \
 compute-sanitizer --tool memcheck --leak-check full --show-backtrace yes --log-file /tmp/gpu.out [executable/python3 main.py]
 ```
 
+## Format clang-format
+[ClangFormat docs](https://clang.llvm.org/docs/ClangFormat.html)
+```bash
+find . -type f -name "*.cpp" -o -name "*.hpp"  | xargs clang-format -style=file -i
+```
 
 ## OpenCV
 All latency unit is _ms_

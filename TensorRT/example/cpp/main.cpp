@@ -18,7 +18,7 @@ static auto rootDir = fs::current_path().parent_path().string();
 class Logger : public nvinfer1::ILogger {
   public:
     Severity mSeverity = Severity::kINFO;
-    Logger(Severity severity = Severity::kINFO) : mSeverity(severity){};
+    Logger(Severity severity = Severity::kINFO) : mSeverity(severity) {};
 
     void error(std::string const &msg) { return log(Severity::kERROR, msg.c_str()); }
     void warning(std::string const &msg) { return log(Severity::kWARNING, msg.c_str()); }
