@@ -24,22 +24,22 @@ cmake --build build --config Release
   </tr>
   <tr>
     <td>FPS</td>
-    <td>36.63</td>
-    <td>41.69</td>
+    <td>60.47</td>
+    <td>165.21</td>
   </tr>
   <tr>
     <td>Preprocess</td>
-    <td>2.319 ms</td>
-    <td>2.366 ms</td>
+    <td>2.491 ms</td>
+    <td>2.283 ms</td>
   </tr>
   <tr>
     <td>Inference</td>
-    <td>19.001 ms</td>
-    <td>20.356 ms</td>
+    <td>8.458 ms</td>
+    <td>2.400 ms</td>
   </tr>
   <tr>
     <td>Postprocess</td>
-    <td>5.981 ms</td>
-    <td>1.263 ms</td>
+    <td>5.589 ms</td>
+    <td>1.370 ms</td>
   </tr>
 </table>

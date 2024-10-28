@@ -30,7 +30,7 @@ m = ct.convert(
     inputs=[ct.TensorType(name="image", shape=(1, 3, 640, 640), dtype=np.float32)],
     outputs=[ct.TensorType(name="output", dtype=np.float32)],
     compute_units=ct.ComputeUnit.ALL,
-    compute_precision=ct.precision.FLOAT32,
+    compute_precision=ct.precision.FLOAT16,
 )
 m.save("yolov8n.mlpackage")
 
