@@ -8,25 +8,24 @@ RUN pip3 install cmake numpy packaging setuptools wheel
 # Install OpenVINO (https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)
 RUN apt-get install curl -y
 RUN mkdir /opt/intel
-RUN curl -L https://storage.openvinotoolkit.org/repositories/openvino/packages/2023.3/linux/l_openvino_toolkit_ubuntu22_2023.3.0.13775.ceeafaf64f3_x86_64.tgz --output openvino_2023.3.0.tgz
-RUN tar -xf openvino_2023.3.0.tgz
-RUN mv l_openvino_toolkit_ubuntu22_2023.3.0.13775.ceeafaf64f3_x86_64 /opt/intel/openvino
+RUN curl -L https://storage.openvinotoolkit.org/repositories/openvino/packages/2024.4/linux/l_openvino_toolkit_ubuntu22_2024.4.0.16579.c3152d32c9c_x86_64.tgz --output openvino.tgz
+RUN tar -xf openvino.tgz
+RUN mv l_openvino_toolkit_ubuntu22_2024.4.0.16579.c3152d32c9c_x86_64 /opt/intel/openvino
 RUN cd /opt/intel/openvino && ./install_dependencies/install_openvino_dependencies.sh -y
 RUN cd /opt/intel/openvino && python3 -m pip install -r ./python/requirements.txt
 # Manually set ENV instead of `source /opt/intel/openvino/setupvars.sh`
-ENV INTEL_OPENVINO_DIR /opt/intel/openvino
-ENV InferenceEngine_DIR ${INTEL_OPENVINO_DIR}/runtime/cmake
-ENV ngraph_DIR ${INTEL_OPENVINO_DIR}/runtime/cmake
+ENV INTEL_OPENVINO_DIR=/opt/intel/openvino
+ENV OpenVINO_DIR=${INTEL_OPENVINO_DIR}/runtime/cmake
 
 # Install ONNXRuntime: build-wheel needs python3-dev, numpy, packaging, setuptools, wheel
-ENV ORT_INSTALL_DIR /onnxruntime
-ENV ORT_RELEASE_TAG v1.16.3
+ENV ORT_INSTALL_DIR=/onnxruntime
+ENV ORT_RELEASE_TAG=v1.19.2
 RUN git clone --recursive -b $ORT_RELEASE_TAG https://github.com/microsoft/onnxruntime.git /tmp/onnxruntime
 
 RUN cd /tmp/onnxruntime && \
     ./build.sh --config Release \
     --allow_running_as_root \
-    --use_openvino CPU_FP32 \
+    --use_openvino CPU \
     --build_shared_lib \
     --build_wheel \
     --update \
@@ -44,9 +43,7 @@ RUN cd /tmp/onnxruntime/build/Linux/Release && \
 # As opencv needed for onnxruntime, we build it here
 FROM opencv-cpu AS binary
 # FROM ubuntu:22.04 AS onnxruntime
-ENV ORT_INSTALL_DIR /onnxruntime
-ENV PATH=$ORT_INSTALL_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$ORT_INSTALL_DIR/lib:$LD_LIBRARY_PATH
+ENV ORT_INSTALL_DIR=/onnxruntime
 COPY --from=build $ORT_INSTALL_DIR $ORT_INSTALL_DIR
 
 RUN apt-get update && apt-get install -y python3 python3-pip

@@ -1,0 +1,4 @@
+torch
+ultralytics==8.3.23
+coremltools==8.0
+onnx==1.17.0

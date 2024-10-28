@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:22.12-py3 AS build
+FROM nvcr.io/nvidia/tensorrt:24.08-py3 AS build
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
@@ -8,8 +8,8 @@ RUN apt-get install -y pkg-config libavcodec-dev libavformat-dev libswscale-dev
 RUN pip3 install cmake numpy
 
 # Install opencv: python version needs python3-dev, numpy
-ENV OPENCV_INSTALL_DIR /opencv
-ENV OPENCV_RELEASE_TAG 4.9.0
+ENV OPENCV_INSTALL_DIR=/opencv
+ENV OPENCV_RELEASE_TAG=4.10.0
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.git /tmp/opencv
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/opencv_contrib
 
@@ -28,10 +28,8 @@ RUN cd /tmp/opencv && mkdir -p build && cd build && \
     make install && \
     ldconfig
 
-FROM nvcr.io/nvidia/tensorrt:22.12-py3 AS binary
-ENV OPENCV_INSTALL_DIR /opencv
-ENV PATH=$OPENCV_INSTALL_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$OPENCV_INSTALL_DIR/lib:$LD_LIBRARY_PATH
+FROM nvcr.io/nvidia/tensorrt:24.08-py3 AS binary
+ENV OPENCV_INSTALL_DIR=/opencv
 COPY --from=build $OPENCV_INSTALL_DIR $OPENCV_INSTALL_DIR
 
 RUN apt-get update
@@ -39,7 +37,7 @@ RUN apt-get update
 # To use opencv in python
 RUN apt-get install -y python3 python3-pip ffmpeg
 RUN pip3 install numpy
-RUN ln -s $OPENCV_INSTALL_DIR/lib/python3.8/site-packages/cv2 /usr/local/lib/python3.8/dist-packages/cv2
+RUN ln -s $OPENCV_INSTALL_DIR/lib/python3.10/dist-packages/cv2 /usr/local/lib/python3.10/dist-packages/cv2
 
 # To compile opencv with cpp code
 RUN pip3 install cmake

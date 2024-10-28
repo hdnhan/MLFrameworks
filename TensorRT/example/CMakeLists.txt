@@ -13,12 +13,11 @@ find_package(OpenCV REQUIRED) # Need `CMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR`
 find_package(CUDA REQUIRED)
 message(STATUS "CUDA found: ${CUDA_VERSION_STRING} ${CUDA_INCLUDE_DIRS} ${CUDA_LIBRARIES}")
 
-
 find_library(LIBNVINFER NAME nvinfer HINTS ${TENSORRT_LIB_PATH} REQUIRED)
 find_library(LIBNVONNXPARSER NAME nvonnxparser HINTS ${TENSORRT_LIB_PATH} REQUIRED)
 find_library(LIBNVINFER_PLUGIN NAME nvinfer_plugin HINTS ${TENSORRT_LIB_PATH} REQUIRED)
 message(STATUS "TensorRT found: ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN}")
 
-cuda_add_executable(main cpp/main.cpp ../../Common/cpp/base.cpp)
-target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ../../Common/cpp)
+cuda_add_executable(main cpp/main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../../Common/cpp/base.cpp)
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../../Common/cpp)
 target_link_libraries(main ${OpenCV_LIBS} ${LIBNVINFER} ${LIBNVONNXPARSER} ${LIBNVINFER_PLUGIN})

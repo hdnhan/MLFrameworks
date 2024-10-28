@@ -1,20 +1,45 @@
-## CoreML on M2 MacBook Air
-### Python
+## macOS - M2 MacBook Air
 ```bash
-python python/main.py
-```
+conda create -yn coreml python=3.10 && conda activate coreml
+pip install torch==2.5.0 coremltools==8.0 opencv-python~=4.10.0 pillow==11.0.0
 
-### C++ (Objective-C++)
-```bash
 # Install XCode from App Store
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 
-# Compile the model
-xcrun coremlc compile ../Assets/yolov8n.mlpackage cpp
-xcrun coremlc generate ../Assets/yolov8n.mlpackage cpp
+# Python
+python py/main.py
 
-# Compile and run the project
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+# Objective-C++ (OpenCV)
+export OPENCV_INSTALL_DIR=/tmp/opencv
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
 cmake --build build --config Release
 ./build/main
 ```
+
+<table>
+  <tr>
+    <td ></td>
+    <td>Python</td>
+    <td>Objtive-C++</td>
+  </tr>
+  <tr>
+    <td>FPS</td>
+    <td>36.63</td>
+    <td>41.69</td>
+  </tr>
+  <tr>
+    <td>Preprocess</td>
+    <td>2.319 ms</td>
+    <td>2.366 ms</td>
+  </tr>
+  <tr>
+    <td>Inference</td>
+    <td>19.001 ms</td>
+    <td>20.356 ms</td>
+  </tr>
+  <tr>
+    <td>Postprocess</td>
+    <td>5.981 ms</td>
+    <td>1.263 ms</td>
+  </tr>
+</table>

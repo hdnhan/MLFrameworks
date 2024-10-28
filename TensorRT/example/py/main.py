@@ -6,20 +6,22 @@ from pathlib import Path
 import numpy as np
 import tensorrt as trt
 import pycuda.driver as cuda
-import pycuda.autoinit
+import pycuda.autoinit  # noqa: F401
 
 logger = trt.Logger(trt.Logger.WARNING)
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 sys.path.append((ROOT_DIR / "Common/py").as_posix())
-from base import Base
+from base import Base  # noqa: E402
 
 
 class TensorRT(Base):
-    def __init__(self, model_name: str,
+    def __init__(
+        self,
+        model_name: str,
         dtype: T.Literal["f32", "f16", "i8"] = "f32",
-        ) -> None:
+    ) -> None:
         super().__init__()
         self.f_onnx = f"{model_name}.onnx"
         self.f_engine = f"{model_name}-{dtype}.engine"
@@ -37,7 +39,7 @@ class TensorRT(Base):
         self.context = self.engine.create_execution_context()
 
         # This allocates memory for network inputs/outputs on both CPU and GPU
-        assert self.engine.num_bindings == 2
+        assert self.engine.num_io_tensors == 2
         self.inputs, self.outputs, self.bindings = None, None, []
         self.input_size, self.output_size = (), ()
         for binding in self.engine:
@@ -80,14 +82,12 @@ class TensorRT(Base):
         with open(self.f_engine, "rb") as f:
             engine_data = f.read()
         self.engine = runtime.deserialize_cuda_engine(engine_data)
-    
+
     def build(self) -> None:
         builder = trt.Builder(logger)
         config = builder.create_builder_config()
         config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
 
-        # config.max_aux_streams = 8
-        config.set_flag(trt.BuilderFlag.STRICT_TYPES)
         if builder.platform_has_fast_fp16 and self.dtype == "f16":
             config.set_flag(trt.BuilderFlag.FP16)
 
@@ -95,7 +95,7 @@ class TensorRT(Base):
             config.set_flag(trt.BuilderFlag.FP16)
             config.set_flag(trt.BuilderFlag.INT8)
 
-        flag = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+        flag = 1 << int(trt.NetworkDefinitionCreationFlag.STRONGLY_TYPED)
         network = builder.create_network(flag)
         parser = trt.OnnxParser(network, logger)
         if not parser.parse_from_file(self.f_onnx):
@@ -109,9 +109,7 @@ class TensorRT(Base):
             print(f'output "{out.name}" with shape{out.shape} {out.dtype}')
 
         # Write file
-        with builder.build_serialized_network(network, config) as plan, open(
-            self.f_engine, "wb"
-        ) as t:
+        with builder.build_serialized_network(network, config) as plan, open(self.f_engine, "wb") as t:
             runtime = trt.Runtime(logger)
             engine = runtime.deserialize_cuda_engine(plan)
             t.write(engine.serialize())
@@ -119,9 +117,8 @@ class TensorRT(Base):
 
 if __name__ == "__main__":
     video_path = (ROOT_DIR / "Assets/video.mp4").as_posix()
-    save_path = (ROOT_DIR / f"Results/Linux-TensorRT-Python.mp4").as_posix()
+    save_path = (ROOT_DIR / "Results/Linux-TensorRT-Python.mp4").as_posix()
 
     # Load the network
     session = TensorRT(f"{ROOT_DIR}/Assets/yolov8n")
     session.run(video_path, save_path)
-

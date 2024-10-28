@@ -7,7 +7,7 @@ import onnxruntime as ort
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 sys.path.append((ROOT_DIR / "Common/py").as_posix())
-from base import Base
+from base import Base  # noqa: E402
 
 
 class ONNXRuntime(Base):

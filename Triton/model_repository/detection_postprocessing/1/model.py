@@ -58,9 +58,7 @@ def postprocess(
     return bboxes, scores, class_ids
 
 
-def scale_boxes(
-    bboxes: np.ndarray, new_shape: T.Tuple[int, int], ori_shape: T.Tuple[int, int]
-) -> np.ndarray:
+def scale_boxes(bboxes: np.ndarray, new_shape: T.Tuple[int, int], ori_shape: T.Tuple[int, int]) -> np.ndarray:
     """Rescale bounding boxes to the original shape.
 
     Preprocess: ori_shape => new_shape
@@ -75,11 +73,10 @@ def scale_boxes(
         np.ndarray: The rescaled and clipped bounding boxes.
     """
     # calculate from ori_shape
-    gain = min(
-        new_shape[0] / ori_shape[0], new_shape[1] / ori_shape[1]
-    )  # gain  = old / new
-    pad = round((new_shape[1] - ori_shape[1] * gain) / 2 - 0.1), round(
-        (new_shape[0] - ori_shape[0] * gain) / 2 - 0.1
+    gain = min(new_shape[0] / ori_shape[0], new_shape[1] / ori_shape[1])  # gain  = old / new
+    pad = (
+        round((new_shape[1] - ori_shape[1] * gain) / 2 - 0.1),
+        round((new_shape[0] - ori_shape[0] * gain) / 2 - 0.1),
     )  # wh padding
 
     bboxes[..., [0, 2]] -= pad[0]  # x padding
@@ -96,15 +93,9 @@ class TritonPythonModel:
     def initialize(self, args: T.Dict[str, T.Any]) -> None:
         model_config = json.loads(args["model_config"])
 
-        bboxes_config = pb_utils.get_output_config_by_name(
-            model_config, "detection_postprocessing_bboxes"
-        )
-        scores_config = pb_utils.get_output_config_by_name(
-            model_config, "detection_postprocessing_scores"
-        )
-        ids_config = pb_utils.get_output_config_by_name(
-            model_config, "detection_postprocessing_ids"
-        )
+        bboxes_config = pb_utils.get_output_config_by_name(model_config, "detection_postprocessing_bboxes")
+        scores_config = pb_utils.get_output_config_by_name(model_config, "detection_postprocessing_scores")
+        ids_config = pb_utils.get_output_config_by_name(model_config, "detection_postprocessing_ids")
 
         self.bboxes_dtype = pb_utils.triton_string_to_numpy(bboxes_config["data_type"])
         self.scores_dtype = pb_utils.triton_string_to_numpy(scores_config["data_type"])
@@ -131,13 +122,9 @@ class TritonPythonModel:
             scores_tensor = pb_utils.Tensor(
                 "detection_postprocessing_scores", scores.astype(self.scores_dtype)
             )
-            ids_tensor = pb_utils.Tensor(
-                "detection_postprocessing_ids", class_ids.astype(self.ids_dtype)
-            )
+            ids_tensor = pb_utils.Tensor("detection_postprocessing_ids", class_ids.astype(self.ids_dtype))
 
-            response = pb_utils.InferenceResponse(
-                output_tensors=[bboxes_tensor, scores_tensor, ids_tensor]
-            )
+            response = pb_utils.InferenceResponse(output_tensors=[bboxes_tensor, scores_tensor, ids_tensor])
             responses.append(response)
         return responses
 

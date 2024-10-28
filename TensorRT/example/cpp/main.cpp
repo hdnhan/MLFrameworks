@@ -67,12 +67,13 @@ class TensorRT : public Base {
             load();
 
         mContext = std::unique_ptr<nvinfer1::IExecutionContext>(mEngine->createExecutionContext());
-        bindings.resize(mEngine->getNbBindings());
-        for (int i = 0; i < mEngine->getNbBindings(); ++i) {
-            nvinfer1::Dims dims = mEngine->getBindingDimensions(i);
+        bindings.resize(mEngine->getNbIOTensors());
+        for (int i = 0; i < mEngine->getNbIOTensors(); ++i) {
+            auto name = mEngine->getIOTensorName(i);
+            nvinfer1::Dims dims = mEngine->getTensorShape(name);
             auto size = std::accumulate(dims.d, dims.d + dims.nbDims, 1, std::multiplies<int64_t>());
             cudaMalloc(&bindings[i], size * sizeof(float));
-            if (mEngine->bindingIsInput(i)) {
+            if (mEngine->getTensorIOMode(name) == nvinfer1::TensorIOMode::kINPUT) {
                 mInputIndices.emplace_back(i);
                 mInputDims.emplace_back(dims);
             } else {
@@ -93,8 +94,7 @@ class TensorRT : public Base {
         std::unique_ptr<nvinfer1::IBuilder> builder{nvinfer1::createInferBuilder(*mLogger)};
         std::unique_ptr<nvinfer1::IBuilderConfig> config{builder->createBuilderConfig()};
 
-        config->setMaxWorkspaceSize(1 << 30); // 1GiB
-        config->setFlag(nvinfer1::BuilderFlag::kSTRICT_TYPES);
+        config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 1UL << 30); // 1GiB
         if (builder->platformHasFastFp16() && dtype == "f16")
             config->setFlag(nvinfer1::BuilderFlag::kFP16);
         if (builder->platformHasFastInt8() && dtype == "i8") {
@@ -102,9 +102,8 @@ class TensorRT : public Base {
             config->setFlag(nvinfer1::BuilderFlag::kINT8);
         }
 
-        auto const explicitBatch =
-            1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-        std::unique_ptr<nvinfer1::INetworkDefinition> network{builder->createNetworkV2(explicitBatch)};
+        auto const flag = 1U << int(nvinfer1::NetworkDefinitionCreationFlag::kSTRONGLY_TYPED);
+        std::unique_ptr<nvinfer1::INetworkDefinition> network{builder->createNetworkV2(flag)};
         std::unique_ptr<nvonnxparser::IParser> parser{nvonnxparser::createParser(*network, *mLogger)};
 
         mLogger->info("Parsing onnx file from " + f_onnx);
@@ -113,9 +112,9 @@ class TensorRT : public Base {
 
         mLogger->info("Building plan from network and config");
         std::unique_ptr<nvinfer1::IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
-        std::unique_ptr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(*mLogger)};
+        mRuntime = std::unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(*mLogger));
         mEngine = std::unique_ptr<nvinfer1::ICudaEngine>(
-            runtime->deserializeCudaEngine(plan->data(), plan->size()));
+            mRuntime->deserializeCudaEngine(plan->data(), plan->size()));
 
         mLogger->info("Saving serialized engine to " + f_engine);
         std::ofstream file;
@@ -134,9 +133,9 @@ class TensorRT : public Base {
         if (!file.read(buffer.data(), size))
             throw std::runtime_error("Error reading engine file.");
 
-        std::unique_ptr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(*mLogger)};
+        mRuntime = std::unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(*mLogger));
         mEngine = std::unique_ptr<nvinfer1::ICudaEngine>(
-            runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
+            mRuntime->deserializeCudaEngine(buffer.data(), buffer.size()));
     }
 
     void infer() override {
@@ -168,6 +167,7 @@ class TensorRT : public Base {
     std::string dtype;
 
     std::unique_ptr<Logger> mLogger;
+    std::unique_ptr<nvinfer1::IRuntime> mRuntime;
     std::unique_ptr<nvinfer1::ICudaEngine> mEngine;
     std::unique_ptr<nvinfer1::IExecutionContext> mContext;
 

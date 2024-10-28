@@ -1,0 +1,23 @@
+{
+    "name": "OpenCV",
+    "build": {
+        "dockerfile": "../OpenCV/dockerfiles/Dockerfile.cpu"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // C++ extensions
+                "ms-vscode.cmake-tools",
+                "llvm-vs-code-extensions.vscode-clangd",
+                // Python
+                "ms-python.python",
+            ]
+        }
+    },
+    "updateContentCommand": [
+        "bash",
+        "-c",
+        "apt-get update && apt-get install -y git clangd-12 && update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-12 100",
+    ],
+    // "postCreateCommand": "cd /workspaces/CVExamples/OpenCV && bash example/run.sh",
+}

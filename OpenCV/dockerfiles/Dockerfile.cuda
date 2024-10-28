@@ -8,9 +8,8 @@ RUN apt-get install -y pkg-config libavcodec-dev libavformat-dev libswscale-dev
 RUN pip3 install cmake numpy
 
 # Install opencv: python version needs python3-dev, numpy
-ENV OPENCV_INSTALL_DIR /opencv
-# For some reason, >4.7.0,<=4.9.0 DNN CUDA give empty results
-ENV OPENCV_RELEASE_TAG 4.7.0
+ENV OPENCV_INSTALL_DIR=/opencv
+ENV OPENCV_RELEASE_TAG=4.10.0
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.git /tmp/opencv
 RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/opencv_contrib
 
@@ -34,9 +33,7 @@ RUN cd /tmp/opencv && mkdir -p build && cd build && \
 # Python: can use cuda-runtime to run directly
 # FROM nvcr.io/nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 AS opencv
 FROM nvcr.io/nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS opencv
-ENV OPENCV_INSTALL_DIR /opencv
-ENV PATH=$OPENCV_INSTALL_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$OPENCV_INSTALL_DIR/lib:$LD_LIBRARY_PATH
+ENV OPENCV_INSTALL_DIR=/opencv
 COPY --from=build $OPENCV_INSTALL_DIR $OPENCV_INSTALL_DIR
 
 RUN apt-get update

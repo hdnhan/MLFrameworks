@@ -4,7 +4,7 @@
 #include <filesystem>
 
 #ifdef USE_TENSORRT
-#include <tensorrt_provider_factory.h>
+#include <tensorrt_provider_options.h>
 #endif
 
 #ifdef USE_OPENVINO
@@ -94,7 +94,7 @@ class ONNXRuntime : public Base {
 #endif
         } else if (ep == "OpenVINOExecutionProvider") {
 #ifdef USE_OPENVINO
-            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(options, "CPU_FP32"));
+            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(options, "CPU"));
 #else
             std::cout << "OpenVINO is not supported." << std::endl;
 #endif

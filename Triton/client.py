@@ -1,3 +1,4 @@
+from pathlib import Path
 from time import perf_counter
 
 import cv2
@@ -54,6 +55,7 @@ if __name__ == "__main__":
     client = grpcclient.InferenceServerClient(url="localhost:8001")
 
     out_path = "/workspace/Results/triton.mp4"
+    Path("/workspace/Results").mkdir(parents=True, exist_ok=True)
     verbose = False
 
     for _ in range(10):

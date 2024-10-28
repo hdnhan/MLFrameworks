@@ -102,7 +102,10 @@ class Base:
         return bboxes, scores, class_ids
 
     def scale_boxes(
-        self, bboxes: np.ndarray, new_shape: T.Tuple[int, int], ori_shape: T.Tuple[int, int]
+        self,
+        bboxes: np.ndarray,
+        new_shape: T.Tuple[int, int],
+        ori_shape: T.Tuple[int, int],
     ) -> np.ndarray:
         """Rescale bounding boxes to the original shape.
 
@@ -119,8 +122,9 @@ class Base:
         """
         # calculate from ori_shape
         gain = min(new_shape[0] / ori_shape[0], new_shape[1] / ori_shape[1])  # gain  = old / new
-        pad = round((new_shape[1] - ori_shape[1] * gain) / 2 - 0.1), round(
-            (new_shape[0] - ori_shape[0] * gain) / 2 - 0.1
+        pad = (
+            round((new_shape[1] - ori_shape[1] * gain) / 2 - 0.1),
+            round((new_shape[0] - ori_shape[0] * gain) / 2 - 0.1),
         )  # wh padding
 
         bboxes[..., [0, 2]] -= pad[0]  # x padding

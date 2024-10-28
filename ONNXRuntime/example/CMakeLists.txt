@@ -45,6 +45,6 @@ else()
   message(STATUS "TensorRT not found")
 endif()
 
-add_executable(main cpp/main.cpp ../../Common/cpp/base.cpp)
-target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ${ORT_INCLUDE_DIRS} ../../Common/cpp)
+add_executable(main cpp/main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../../Common/cpp/base.cpp)
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS} ${ORT_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../../Common/cpp)
 target_link_libraries(main ${OpenCV_LIBS} ${ORT_LIBRARY})
