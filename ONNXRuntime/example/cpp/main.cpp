@@ -100,7 +100,9 @@ class ONNXRuntime : public Base {
 #endif
         } else if (ep == "CoreMLExecutionProvider") {
 #ifdef USE_COREML
-            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CoreML(options, 0));
+            uint32_t coreml_flags = 0;
+            coreml_flags |= COREML_FLAG_ONLY_ENABLE_DEVICE_WITH_ANE;
+            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CoreML(options, coreml_flags));
 #else
             std::cout << "CoreML is not supported." << std::endl;
 #endif
