@@ -46,12 +46,11 @@ FROM opencv-cpu AS binary
 ENV ORT_INSTALL_DIR=/onnxruntime
 COPY --from=build $ORT_INSTALL_DIR $ORT_INSTALL_DIR
 
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN sudo apt-get install -y python3 python3-pip
 RUN pip3 install $ORT_INSTALL_DIR/*.whl
-RUN pip3 install cmake
 
 # OpenVINO
 COPY --from=build /opt/intel/openvino /opt/intel/openvino
 # RUN /opt/intel/openvino/install_dependencies/install_openvino_dependencies.sh -y
-RUN apt-get install libtbb12 -y
-ENV LD_LIBRARY_PATH=/opt/intel/openvino/runtime/lib/intel64:$LD_LIBRARY_PATH
+RUN sudo apt-get install libtbb12 -y
+ENV LD_LIBRARY_PATH=/opt/intel/openvino/runtime/lib/intel64:${LD_LIBRARY_PATH:-}

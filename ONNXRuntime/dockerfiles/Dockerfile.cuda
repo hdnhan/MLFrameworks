@@ -39,6 +39,5 @@ FROM opencv-cuda AS binary
 ENV ORT_INSTALL_DIR=/onnxruntime
 COPY --from=build $ORT_INSTALL_DIR $ORT_INSTALL_DIR
 
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN sudo apt-get install -y python3 python3-pip
 RUN pip3 install $ORT_INSTALL_DIR/*.whl
-RUN pip3 install cmake
