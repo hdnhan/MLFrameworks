@@ -9,23 +9,42 @@ folders_to_ignore = [
 
 
 @task
-def pyfmt(c: Context) -> None:
+def pyfmt(c: Context, verbose: bool = True) -> None:
     files = []
     files.extend(Path(".").resolve().rglob("*.py"))
 
-    # ruff
     files_to_format = []
     for file in files:
         if any(folder in file.as_posix() for folder in folders_to_ignore):
             continue
         files_to_format.append(file.as_posix())
 
-    c.run(f"ruff format --verbose --check {' '.join(files_to_format)}", echo=True)
-    c.run(f"ruff check --verbose {' '.join(files_to_format)}", echo=True)
+    options = ""
+    if verbose:
+        options += " --verbose"
+
+    c.run(f"ruff format {options} --check {' '.join(files_to_format)}", echo=True)
 
 
 @task
-def cppfmt(c: Context, check: bool = True) -> None:
+def pylint(c: Context, verbose: bool = True) -> None:
+    files = []
+    files.extend(Path(".").resolve().rglob("*.py"))
+
+    files_to_format = []
+    for file in files:
+        if any(folder in file.as_posix() for folder in folders_to_ignore):
+            continue
+        files_to_format.append(file.as_posix())
+
+    options = ""
+    if verbose:
+        options += " --verbose"
+    c.run(f"ruff check {options} {' '.join(files_to_format)}", echo=True)
+
+
+@task
+def cppfmt(c: Context, check: bool = True, verbose: bool = True) -> None:
     # [ClangFormat docs](https://clang.llvm.org/docs/ClangFormat.html)
     # find . -type f -name "*.cpp" -o -name "*.hpp"  | xargs clang-format -style=file -i
 
@@ -44,6 +63,6 @@ def cppfmt(c: Context, check: bool = True) -> None:
         files_to_format.append(file.as_posix())
 
     options = "--dry-run -Werror" if check else "-i"
-    c.run(
-        f"clang-format {options} --verbose -style=file:.clang-format {' '.join(files_to_format)}", echo=True
-    )
+    if verbose:
+        options += " --verbose"
+    c.run(f"clang-format {options} -style=file:.clang-format {' '.join(files_to_format)}", echo=True)
