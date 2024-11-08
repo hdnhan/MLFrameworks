@@ -1,0 +1,36 @@
+name: Formatting and Linting
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+      - github-action/*
+  pull_request:
+    branches:
+      - main
+
+# https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  Formatting_and_Linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install invoke==2.2.0 ruff==0.5.5 clang-format==18.1.8
+      - name: Formatting
+        run: |
+          invoke pyfmt --verbose
+          invoke cppfmt --check --verbose
+      - name: Linting
+        run: |
+          invoke pylint --verbose
