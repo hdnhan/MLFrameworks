@@ -1,4 +1,6 @@
+import os
 import sys
+import logging
 from pathlib import Path
 
 import cv2
@@ -8,6 +10,8 @@ ROOT_DIR = Path(__file__).resolve().parents[3]
 
 sys.path.append((ROOT_DIR / "Common/py").as_posix())
 from base import Base  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 class OpenCV(Base):
@@ -37,6 +41,12 @@ class OpenCV(Base):
 
 
 if __name__ == "__main__":
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
     if sys.platform.startswith("linux"):
         platform = "Linux"
     elif sys.platform == "darwin":
@@ -45,14 +55,15 @@ if __name__ == "__main__":
         raise RuntimeError(f"Unknown platform: {sys.platform}")
 
     video_path = (ROOT_DIR / "Assets/video.mp4").as_posix()
+    logger.info(f"Video path: {video_path}")
 
     if cv2.cuda.getCudaEnabledDeviceCount() > 0:
-        print("Using CUDA")
+        logger.info("Using CUDA")
         save_path = (ROOT_DIR / f"Results/{platform}-OpenCV-Python-CUDA.mp4").as_posix()
         session = OpenCV(use_cuda=True)
         session.run(video_path, save_path)
 
-    print("Using CPU")
+    logger.info("Using CPU")
     save_path = (ROOT_DIR / f"Results/{platform}-OpenCV-Python-CPU.mp4").as_posix()
     session = OpenCV()
     session.run(video_path, save_path)

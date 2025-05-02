@@ -1,0 +1,7 @@
+CompileFlags:
+  Add: [-std=c++17]
+Diagnostics:
+  # Available in clangd-14
+  UnusedIncludes: Strict
+  # Require clangd-17
+  MissingIncludes: Strict

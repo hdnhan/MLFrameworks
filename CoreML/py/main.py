@@ -1,4 +1,6 @@
+import os
 import sys
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -7,6 +9,8 @@ import coremltools as ct
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.append((ROOT_DIR / "Common/py").as_posix())
 from base import Base  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 class CoreML(Base):
@@ -32,7 +36,14 @@ class CoreML(Base):
 
 
 if __name__ == "__main__":
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
     video_path = (ROOT_DIR / "Assets/video.mp4").as_posix()
+    logger.info(f"Video path: {video_path}")
     save_path = (ROOT_DIR / "Results/coreml-python.mp4").as_posix()
     coreml = CoreML()
     coreml.run(video_path, save_path)

@@ -137,8 +137,8 @@ python example/py/main.py
 export OPENCV_INSTALL_DIR=/tmp/opencv
 export ORT_INSTALL_DIR=/tmp/onnxruntime
 cmake -S example -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR -DORT_INSTALL_DIR=$ORT_INSTALL_DIR
-cmake --build build --config Release
-./build/main
+cmake --build build --config Release --parallel
+SPDLOG_LEVEL=debug ./build/main
 ```
 
 <table>

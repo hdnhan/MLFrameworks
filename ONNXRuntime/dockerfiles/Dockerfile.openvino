@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 RUN apt-get install -y git build-essential python3-dev python3-pip
-RUN pip3 install cmake numpy packaging setuptools wheel
+RUN pip3 install "cmake<4" numpy packaging setuptools wheel
 
 # Install OpenVINO (https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)
 RUN apt-get install curl -y
@@ -19,7 +19,7 @@ ENV OpenVINO_DIR=${INTEL_OPENVINO_DIR}/runtime/cmake
 
 # Install ONNXRuntime: build-wheel needs python3-dev, numpy, packaging, setuptools, wheel
 ENV ORT_INSTALL_DIR=/onnxruntime
-ENV ORT_RELEASE_TAG=v1.19.2
+ENV ORT_RELEASE_TAG=v1.21.1
 RUN git clone --recursive -b $ORT_RELEASE_TAG https://github.com/microsoft/onnxruntime.git /tmp/onnxruntime
 
 RUN cd /tmp/onnxruntime && \
@@ -30,10 +30,12 @@ RUN cd /tmp/onnxruntime && \
     --build_wheel \
     --update \
     --parallel \
+    --skip_tests \
     --cmake_extra_defines \
-    CMAKE_INSTALL_PREFIX=$ORT_INSTALL_DIR
+    CMAKE_INSTALL_PREFIX=$ORT_INSTALL_DIR \
+    onnxruntime_BUILD_UNIT_TESTS=OFF
 RUN cd /tmp/onnxruntime/build/Linux/Release && \
-    make install && ldconfig
+    make -j$(nproc) && make install && ldconfig
 
 # For some reason, build_wheel above doesn't work, so we build the wheel manually
 RUN cd /tmp/onnxruntime/build/Linux/Release && \

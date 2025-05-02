@@ -1,7 +1,18 @@
 #include "base.hpp"
 #include "onnxruntime_cxx_api.h"
+#include <cstdint>
 #include <cstring>
+#include <cxxopts.hpp>
 #include <filesystem>
+#include <iostream>
+#include <opencv2/core/hal/interface.h>
+#include <opencv2/core/mat.hpp>
+#include <spdlog/cfg/env.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #ifdef USE_TENSORRT
 #include <tensorrt_provider_options.h>
@@ -84,19 +95,19 @@ class ONNXRuntime : public Base {
             Ort::ThrowOnError(
                 api.SessionOptionsAppendExecutionProvider_TensorRT_V2(options, tensorrt_options));
 #else
-            std::cout << "TensorRT is not supported." << std::endl;
+            spdlog::warn("TensorRT is not supported.");
 #endif
         } else if (ep == "CUDAExecutionProvider") {
 #ifdef USE_CUDA
             Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(options, 0));
 #else
-            std::cout << "CUDA is not supported." << std::endl;
+            spdlog::warn("CUDA is not supported.");
 #endif
         } else if (ep == "OpenVINOExecutionProvider") {
 #ifdef USE_OPENVINO
             Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(options, "CPU"));
 #else
-            std::cout << "OpenVINO is not supported." << std::endl;
+            spdlog::warn("OpenVINO is not supported.");
 #endif
         } else if (ep == "CoreMLExecutionProvider") {
 #ifdef USE_COREML
@@ -109,7 +120,7 @@ class ONNXRuntime : public Base {
         } else if (ep == "CPUExecutionProvider") {
             // CPUExecutionProvider is the default provider
         } else {
-            std::cout << "Provider not found: " << ep << std::endl;
+            spdlog::warn("Provider not found: {}", ep);
         }
     }
 
@@ -162,15 +173,33 @@ class ONNXRuntime : public Base {
     std::vector<std::vector<int64_t>> outputDims;
 };
 
-int main() {
-    std::string video_path = rootDir + "/Assets/video.mp4";
+int main(int argc, char *argv[]) {
+    cxxopts::Options options("./build/main", "OpenCV C++ Example");
+    options.add_options()("h,help", "Show help")(
+        "v,video", "Path to video file",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Assets/video.mp4"))(
+        "s,save", "Directory to save output video",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Results"));
+    auto config = options.parse(argc, argv);
+    if (config.count("help")) {
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
+
+    spdlog::cfg::load_env_levels();
+    // spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("[%x %X.%e] [%^%l%$] %v");
+
+    std::string video_path = config["video"].as<std::string>();
+    std::string save_dir = config["save"].as<std::string>();
+    spdlog::info("Video path: {}", video_path);
 
     auto providers = Ort::GetAvailableProviders();
     for (auto const &ep : providers) {
-        std::cout << "Using " << ep << std::endl;
-        std::string save_path = rootDir + "/Results/" + PLATFORM + "-ONNXRuntime-Cpp-" + ep + ".mp4";
+        spdlog::info("Using {}", ep);
+        std::string save_path = save_dir + "/" + PLATFORM + "-ONNXRuntime-Cpp-" + ep + ".mp4";
         ONNXRuntime session(ep);
-        session.run(video_path, save_path, false);
+        session.run(video_path, save_path);
     }
 
     return 0;

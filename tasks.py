@@ -9,7 +9,7 @@ folders_to_ignore = [
 
 
 @task
-def pyfmt(c: Context, verbose: bool = True) -> None:
+def pyfmt(c: Context, check: bool = True, verbose: bool = True) -> None:
     files = []
     files.extend(Path(".").resolve().rglob("*.py"))
 
@@ -22,8 +22,10 @@ def pyfmt(c: Context, verbose: bool = True) -> None:
     options = ""
     if verbose:
         options += " --verbose"
+    if check:
+        options += " --check"
 
-    c.run(f"ruff format {options} --check {' '.join(files_to_format)}", echo=True)
+    c.run(f"ruff format {options} {' '.join(files_to_format)}", echo=True)
 
 
 @task
