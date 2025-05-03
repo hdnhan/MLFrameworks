@@ -7,13 +7,15 @@ git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.gi
 git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/git/opencv_contrib
 
 # Create a (miniconda) virtual environment and activate it
-pip install cmake numpy
+pip install "cmake<4" numpy
 brew install pkg-config ffmpeg # check: brew list
 
 cd /tmp/git/opencv && mkdir -p build && cd build && \
 cmake -S .. -B . \
     -DCMAKE_BUILD_TYPE=RELEASE \
     -DCMAKE_INSTALL_PREFIX=$OPENCV_INSTALL_DIR \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_PERF_TESTS=OFF \
     -DINSTALL_PYTHON_EXAMPLES=OFF \
     -DINSTALL_C_EXAMPLES=OFF \
     -DBUILD_EXAMPLES=OFF \

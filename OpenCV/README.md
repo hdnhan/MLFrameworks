@@ -111,8 +111,8 @@ python example/py/main.py
 # C++
 export OPENCV_INSTALL_DIR=/tmp/opencv
 cmake -S example -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$OPENCV_INSTALL_DIR
-cmake --build build --config Release
-./build/main
+cmake --build build --config Release --parallel
+SPDLOG_LEVEL=info ./build/main
 ```
 
 <table>

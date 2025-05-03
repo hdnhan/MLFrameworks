@@ -1,7 +1,10 @@
 #pragma once
 
-#include <chrono>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 class Base {
@@ -27,7 +30,7 @@ class Base {
     void warmUp();
 
   public:
-    void run(std::string const &video_path, std::string const &save_path, bool verbose = false);
+    void run(std::string const &video_path, std::string const &save_path);
 
   protected:
     // preprocessed image

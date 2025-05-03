@@ -1,6 +1,10 @@
 #include "base.hpp"
 #include <CoreML/CoreML.h>
+#include <cxxopts.hpp>
 #include <filesystem>
+#include <spdlog/cfg/env.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
 namespace fs = std::filesystem;
 
@@ -17,9 +21,15 @@ class CoreML : public Base {
         MLModelConfiguration *config = [[MLModelConfiguration alloc] init];
         config.computeUnits = MLComputeUnitsCPUAndNeuralEngine;
 
+        // Release the current model if it exists
+        if (model) {
+            [model release];
+            model = nil;
+        }
+
         // Load the model
         NSError *error = nil;
-        model = [MLModel modelWithContentsOfURL:modelURL configuration:config error:&error];
+        model = [[MLModel modelWithContentsOfURL:modelURL configuration:config error:&error] retain];
 
         if (error) {
             NSLog(@"Error: %@", error);
@@ -27,18 +37,29 @@ class CoreML : public Base {
         }
 
         // Create input dictionary
-        inputDict = [NSMutableDictionary dictionary];
-        // image: MLMultiArray 1x3x640x640
-        inputDict[@"image"] = [[MLMultiArray alloc] initWithShape:@[ @1, @3, @640, @640 ]
-                                                         dataType:MLMultiArrayDataTypeFloat32
-                                                            error:&error];
+        inputDict = [[NSMutableDictionary alloc] init];
+        NSDictionary *inputDesc = model.modelDescription.inputDescriptionsByName;
+        for (NSString *key in inputDesc) {
+            MLFeatureDescription *desc = inputDesc[key];
+            if (!desc.multiArrayConstraint)
+                throw std::runtime_error(key.UTF8String + std::string(" is not a multiarray from ") + path);
+            NSArray<NSNumber *> *shape = desc.multiArrayConstraint.shape;
+            inputDict[key] = [[MLMultiArray alloc] initWithShape:shape
+                                                        dataType:desc.multiArrayConstraint.dataType
+                                                           error:&error];
+            if (error) {
+                NSLog(@"Error creating input array for %@: %@", key, error);
+                throw std::runtime_error("Failed to create input array");
+            }
+            NSLog(@"Input name: %@, shape: %@", key, shape);
+        }
     }
 
   private:
     void infer() override {
         // Get the input data
         MLMultiArray *input = inputDict[@"image"];
-        memcpy(input.dataPointer, cvImage.data, 640 * 640 * 3 * sizeof(float));
+        memcpy(input.dataPointer, cvImage.data, input.count * sizeof(float));
 
         NSError *error = nil;
         id<MLFeatureProvider> inputProvider =
@@ -69,11 +90,29 @@ class CoreML : public Base {
     NSMutableDictionary *inputDict;
 };
 
-int main() {
-    auto const video_path = rootDir + "/Assets/video.mp4";
-    auto const save_path = rootDir + "/Results/coreml-objc.mp4";
+int main(int argc, char *argv[]) {
+    cxxopts::Options options("./build/main", "OpenCV C++ Example");
+    options.add_options()("h,help", "Show help")(
+        "v,video", "Path to video file",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Assets/video.mp4"))(
+        "s,save", "Directory to save output video",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Results"));
+    auto config = options.parse(argc, argv);
+    if (config.count("help")) {
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
+
+    spdlog::cfg::load_env_levels();
+    // spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("[%x %X.%e] [%^%l%$] %v");
+
+    std::string video_path = config["video"].as<std::string>();
+    std::string save_dir = config["save"].as<std::string>();
+    spdlog::info("Video path: {}", video_path);
+    std::string save_path = save_dir + "/coreml-objc.mp4";
     CoreML session;
-    session.run(video_path, save_path, false);
+    session.run(video_path, save_path);
 
     return 0;
 }

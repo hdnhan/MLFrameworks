@@ -1,5 +1,14 @@
 #include "base.hpp"
+#include "spdlog/spdlog.h"
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstddef>
+#include <filesystem>
+#include <string>
+#include <vector>
 
+namespace fs = std::filesystem;
 void Base::preprocess(cv::Mat const &image, cv::Size const &newShape) {
     // Resize but keep aspect ratio
     float h = image.rows, w = image.cols;
@@ -81,14 +90,33 @@ void Base::draw(cv::Mat &image) {
 }
 
 void Base::warmUp() {
+    spdlog::debug("Warm up started.");
     cv::Mat image = cv::Mat::zeros(480, 640, CV_8UC3);
     cv::Size newShape(640, 640);
     preprocess(image, newShape);
     infer();
     postprocess(newShape, image.size());
+    spdlog::debug("Warm up completed.");
 }
 
-void Base::run(std::string const &video_path, std::string const &save_path, bool verbose) {
+void Base::run(std::string const &video_path, std::string const &save_path) {
+    spdlog::info("Run started.");
+    // Validate video path
+    if (!fs::exists(video_path)) {
+        spdlog::error("Video path does not exist: {}", video_path);
+        return;
+    }
+
+    // Validate save path
+    if (fs::exists(save_path)) {
+        spdlog::warn("Save path already exists, overwriting: {}", save_path);
+    } else if (!fs::exists(fs::path(save_path).parent_path())) {
+        spdlog::info("Creating directories for save path: {}", save_path);
+        fs::create_directories(fs::path(save_path).parent_path());
+    } else {
+        spdlog::info("Save path: {}", save_path);
+    }
+
     // Warm up
     for (int i = 0; i < 10; ++i)
         warmUp();
@@ -97,7 +125,7 @@ void Base::run(std::string const &video_path, std::string const &save_path, bool
     cv::VideoWriter writer;
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
-        std::cerr << "Error: Cannot open the video file." << std::endl;
+        spdlog::error("Error: Cannot open the video file {}", video_path);
         return;
     }
 
@@ -108,12 +136,15 @@ void Base::run(std::string const &video_path, std::string const &save_path, bool
     int count = 0;
     cv::Mat frame;
     while (cap.read(frame) && !frame.empty()) {
+        spdlog::debug("Frame: {}", count);
+
         // Preprocess
         start = std::chrono::high_resolution_clock::now();
         preprocess(frame, newShape);
         end = std::chrono::high_resolution_clock::now();
         t_pre = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_pres += t_pre;
+        spdlog::debug("Preprocess time: {} ms", t_pre / 1e3);
 
         // Inference
         start = std::chrono::high_resolution_clock::now();
@@ -121,6 +152,7 @@ void Base::run(std::string const &video_path, std::string const &save_path, bool
         end = std::chrono::high_resolution_clock::now();
         t_infer = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_infers += t_infer;
+        spdlog::debug("Inference time: {} ms", t_infer / 1e3);
 
         // Postprocess
         start = std::chrono::high_resolution_clock::now();
@@ -128,19 +160,16 @@ void Base::run(std::string const &video_path, std::string const &save_path, bool
         end = std::chrono::high_resolution_clock::now();
         t_post = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_posts += t_post;
+        spdlog::debug("Postprocess time: {} ms", t_post / 1e3);
 
         // Draw
         draw(frame);
         double fps = 1e6 / (t_pre + t_infer + t_post);
+        spdlog::debug("FPS: {}", fps);
         std::string fps_str = cv::format("FPS: %.2f", fps);
         cv::putText(frame, fps_str, cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
         count++;
-        if (verbose)
-            std::cout << std::fixed << std::setprecision(3) << count << " -> Preprocess: " << t_pre / 1e3
-                      << " ms, Inference: " << t_infer / 1e3 << " ms, Postprocess: " << t_post / 1e3
-                      << " ms, FPS: " << fps << std::endl;
-
         // Save the video
         if (!writer.isOpened())
             writer.open(save_path, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 20, frame.size());
@@ -151,9 +180,8 @@ void Base::run(std::string const &video_path, std::string const &save_path, bool
     if (writer.isOpened())
         writer.release();
 
-    std::cout << std::fixed << std::setprecision(3) << "Preprocess: " << t_pres / 1e3 / count
-              << " ms, Inference: " << t_infers / 1e3 / count << " ms, Postprocess: " << t_posts / 1e3 / count
-              << " ms" << std::endl;
-    std::cout << std::fixed << std::setprecision(2) << "FPS: " << 1e6 * count / (t_pres + t_infers + t_posts)
-              << std::endl;
+    spdlog::info("Preprocess: {} ms, Inference: {} ms, Postprocess: {} ms", t_pres / 1e3 / count,
+                 t_infers / 1e3 / count, t_posts / 1e3 / count);
+    spdlog::info("FPS: {} ms", 1e6 * count / (t_pres + t_infers + t_posts));
+    spdlog::info("Run completed.");
 }

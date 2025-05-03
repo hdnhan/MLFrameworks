@@ -1,9 +1,12 @@
+import logging
 import typing as T
 from pathlib import Path
 from time import perf_counter
 
 import cv2
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class Base:
@@ -168,11 +171,13 @@ class Base:
             )
 
     def warmup(self) -> None:
+        logger.debug("Warm up started.")
         image = np.random.rand(1, 3, 480, 640).astype(np.float32)
         new_shape = (640, 640)
         image = self.preprocess(image, new_shape)
         output = self.infer(image)
         bboxes, scores, class_ids = self.postprocess(output, new_shape, (480, 640))
+        logger.debug("Warm up finished.")
 
     def run(self, video_path: str, save_path: str, verbose: bool = False) -> None:
         """Run the model on the video.
@@ -182,6 +187,18 @@ class Base:
             save_path (str): The path to save the output video.
             verbose (bool, optional): Whether to print the FPS. Defaults to False.
         """
+        logger.debug("Run started.")
+        # Validate video path
+        if not Path(video_path).is_file():
+            raise FileNotFoundError(f"Cannot find video: {video_path}")
+        # Validate save path
+        if Path(save_path).exists():
+            logger.warning(f"Save path already exists, overwriting: {save_path}")
+        elif not Path(save_path).parent.is_dir():
+            logger.info(f"Creating directory for save path: {save_path}")
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        else:
+            logger.info(f"Save path: {save_path}")
 
         # Warmup
         for _ in range(10):
@@ -198,6 +215,7 @@ class Base:
         t_pres, t_infers, t_posts = 0, 0, 0
         count = 0
         while cap.isOpened():
+            logger.debug(f"Frame {count}")
             ret, frame = cap.read()
             if not ret:
                 break
@@ -210,6 +228,7 @@ class Base:
             end = perf_counter()
             t_pre = end - start
             t_pres += t_pre
+            logger.debug(f"Preprocess time: {t_pre / 1e3:.3f} ms")
 
             # Inference
             start = perf_counter()
@@ -217,6 +236,7 @@ class Base:
             end = perf_counter()
             t_infer = end - start
             t_infers += t_infer
+            logger.debug(f"Inference time: {t_infer / 1e3:.3f} ms")
 
             # Postprocess
             start = perf_counter()
@@ -224,8 +244,10 @@ class Base:
             end = perf_counter()
             t_post = end - start
             t_posts += t_post
+            logger.debug(f"Postprocess time: {t_post / 1e3:.3f} ms")
 
             fps = 1 / (t_pre + t_infer + t_post)
+            logger.debug(f"FPS: {fps:.2f}")
             self.draw(frame, bboxes, scores, class_ids)
             cv2.putText(
                 frame,
@@ -237,10 +259,6 @@ class Base:
                 2,
             )
             count += 1
-            if verbose:
-                print(
-                    f"{count} -> Preprocess: {t_pre * 1e3:.3f} ms, Inference: {t_infer * 1e3:.3f} ms, Postprocess: {t_post * 1e3:.3f} ms, FPS: {fps:.2f}"
-                )
 
             if not writer.isOpened():
                 height, width = frame.shape[:2]
@@ -251,12 +269,13 @@ class Base:
                     (width, height),
                 )
             writer.write(frame)
-        print(
-            f"Preprocess: {t_pres * 1e3 / count :.3f} ms, Inference: {t_infers * 1e3 / count :.3f} ms, Postprocess: {t_posts * 1e3 / count :.3f} ms"
+        logger.info(
+            f"Preprocess: {t_pres * 1e3 / count:.3f} ms, Inference: {t_infers * 1e3 / count:.3f} ms, Postprocess: {t_posts * 1e3 / count:.3f} ms"
         )
-        print(f"FPS: {count / (t_pres + t_infers + t_posts):.2f}")
+        logger.info(f"FPS: {count / (t_pres + t_infers + t_posts):.2f}")
 
         if cap.isOpened():
             cap.release()
         if writer.isOpened():
             writer.release()
+        logger.info("Run finished.")

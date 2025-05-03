@@ -2,10 +2,14 @@
 
 #include <cuda_runtime_api.h>
 
+#include <cxxopts.hpp>
 #include <filesystem>
 #include <fstream>
 #include <numeric>
 #include <opencv2/opencv.hpp>
+#include <spdlog/cfg/env.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
@@ -177,9 +181,27 @@ class TensorRT : public Base {
     std::vector<std::vector<float>> mOutputs;
 };
 
-int main() {
-    std::string video_path = rootDir + "/Assets/video.mp4";
-    std::string save_path = rootDir + "/Results/Linux-TensorRT-Cpp.mp4";
+int main(int argc, char *argv[]) {
+    cxxopts::Options options("./build/main", "TensorRT C++ Example");
+    options.add_options()("h,help", "Show help")(
+        "v,video", "Path to video file",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Assets/video.mp4"))(
+        "s,save", "Directory to save output video",
+        cxxopts::value<std::string>()->default_value(rootDir + "/Results"));
+    auto config = options.parse(argc, argv);
+    if (config.count("help")) {
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
+
+    spdlog::cfg::load_env_levels();
+    // spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("[%x %X.%e] [%^%l%$] %v");
+
+    std::string video_path = config["video"].as<std::string>();
+    std::string save_dir = config["save"].as<std::string>();
+    spdlog::info("Video path: {}", video_path);
+    std::string save_path = save_dir + "/Linux-TensorRT-Cpp.mp4";
 
     // Load the network
     TensorRT session(rootDir + "/Assets/yolov8n");

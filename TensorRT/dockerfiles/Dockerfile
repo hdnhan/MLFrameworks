@@ -1,33 +1,3 @@
-FROM nvcr.io/nvidia/tensorrt:24.08-py3 AS build
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update
-RUN apt-get install -y git build-essential python3-dev python3-pip
-# Video I/O dependencies
-RUN apt-get install -y pkg-config libavcodec-dev libavformat-dev libswscale-dev
-RUN pip3 install cmake numpy
-
-# Install opencv: python version needs python3-dev, numpy
-ENV OPENCV_INSTALL_DIR=/opencv
-ENV OPENCV_RELEASE_TAG=4.10.0
-RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv.git /tmp/opencv
-RUN git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_contrib.git /tmp/opencv_contrib
-
-RUN cd /tmp/opencv && mkdir -p build && cd build && \
-    cmake -S .. -B . \
-    -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=$OPENCV_INSTALL_DIR \
-    -D INSTALL_PYTHON_EXAMPLES=OFF \
-    -D INSTALL_C_EXAMPLES=OFF \
-    -D BUILD_EXAMPLES=OFF \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -DPYTHON3_EXECUTABLE=$(which python3) \
-    -D WITH_CUDA=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=/tmp/opencv_contrib/modules && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig
-
 FROM nvcr.io/nvidia/tensorrt:24.08-py3 AS binary
 # Creating a non-root user
 ARG USERNAME=dev
@@ -39,7 +9,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
     #
     # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
     && apt-get update \
-    && apt-get install -y sudo \
+    && apt-get install -y sudo git \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
@@ -49,7 +19,7 @@ USER $USERNAME
 
 # OpenCV
 ENV OPENCV_INSTALL_DIR=/opencv
-COPY --from=build $OPENCV_INSTALL_DIR $OPENCV_INSTALL_DIR
+COPY --from=opencv-cpu $OPENCV_INSTALL_DIR $OPENCV_INSTALL_DIR
 
 # To use opencv in python
 RUN sudo apt-get install -y python3 python3-pip ffmpeg
