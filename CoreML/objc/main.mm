@@ -21,6 +21,12 @@ class CoreML : public Base {
         MLModelConfiguration *config = [[MLModelConfiguration alloc] init];
         config.computeUnits = MLComputeUnitsCPUAndNeuralEngine;
 
+        // Release the current model if it exists
+        if (model) {
+            [model release];
+            model = nil;
+        }
+
         // Load the model
         NSError *error = nil;
         model = [[MLModel modelWithContentsOfURL:modelURL configuration:config error:&error] retain];

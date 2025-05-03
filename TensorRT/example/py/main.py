@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import typing as T
 from pathlib import Path
 
@@ -8,12 +9,14 @@ import tensorrt as trt
 import pycuda.driver as cuda
 import pycuda.autoinit  # noqa: F401
 
-logger = trt.Logger(trt.Logger.WARNING)
+trt_logger = trt.Logger(trt.Logger.WARNING)
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 
 sys.path.append((ROOT_DIR / "Common/py").as_posix())
 from base import Base  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 class TensorRT(Base):
@@ -27,7 +30,7 @@ class TensorRT(Base):
         self.f_engine = f"{model_name}-{dtype}.engine"
         self.dtype = dtype
 
-        trt.init_libnvinfer_plugins(logger, "")
+        trt.init_libnvinfer_plugins(trt_logger, "")
         self.engine = None
 
         if not os.path.exists(self.f_engine):
@@ -78,13 +81,13 @@ class TensorRT(Base):
         return self.outputs[0].reshape(self.output_size)
 
     def load(self) -> None:
-        runtime = trt.Runtime(logger)
+        runtime = trt.Runtime(trt_logger)
         with open(self.f_engine, "rb") as f:
             engine_data = f.read()
         self.engine = runtime.deserialize_cuda_engine(engine_data)
 
     def build(self) -> None:
-        builder = trt.Builder(logger)
+        builder = trt.Builder(trt_logger)
         config = builder.create_builder_config()
         config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
 
@@ -97,7 +100,7 @@ class TensorRT(Base):
 
         flag = 1 << int(trt.NetworkDefinitionCreationFlag.STRONGLY_TYPED)
         network = builder.create_network(flag)
-        parser = trt.OnnxParser(network, logger)
+        parser = trt.OnnxParser(network, trt_logger)
         if not parser.parse_from_file(self.f_onnx):
             raise RuntimeError(f"failed to load ONNX file: {self.f_onnx}")
 
@@ -110,12 +113,18 @@ class TensorRT(Base):
 
         # Write file
         with builder.build_serialized_network(network, config) as plan, open(self.f_engine, "wb") as t:
-            runtime = trt.Runtime(logger)
+            runtime = trt.Runtime(trt_logger)
             engine = runtime.deserialize_cuda_engine(plan)
             t.write(engine.serialize())
 
 
 if __name__ == "__main__":
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
     video_path = (ROOT_DIR / "Assets/video.mp4").as_posix()
     save_path = (ROOT_DIR / "Results/Linux-TensorRT-Python.mp4").as_posix()
 

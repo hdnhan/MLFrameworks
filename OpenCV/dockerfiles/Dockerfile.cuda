@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS build
+FROM nvcr.io/nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04 AS build
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
@@ -30,11 +30,7 @@ RUN cd /tmp/opencv && mkdir -p build && cd build && \
     make install && \
     ldconfig
 
-# Because we later compile OpenCV which needs cuda-dev
-# C++: after compilation, just need cuda-runtime to run
-# Python: can use cuda-runtime to run directly
-# FROM nvcr.io/nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 AS opencv
-FROM nvcr.io/nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS opencv
+FROM nvcr.io/nvidia/cuda:12.6.3-cudnn-devel-ubuntu22.04 AS opencv
 # Creating a non-root user
 ARG USERNAME=dev
 ARG USER_UID=1000

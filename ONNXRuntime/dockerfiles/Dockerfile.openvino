@@ -8,9 +8,9 @@ RUN pip3 install "cmake<4" numpy packaging setuptools wheel
 # Install OpenVINO (https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/download.html)
 RUN apt-get install curl -y
 RUN mkdir /opt/intel
-RUN curl -L https://storage.openvinotoolkit.org/repositories/openvino/packages/2024.4/linux/l_openvino_toolkit_ubuntu22_2024.4.0.16579.c3152d32c9c_x86_64.tgz --output openvino.tgz
+RUN curl -L https://storage.openvinotoolkit.org/repositories/openvino/packages/2025.1/linux/openvino_toolkit_ubuntu22_2025.1.0.18503.6fec06580ab_x86_64.tgz --output openvino.tgz
 RUN tar -xf openvino.tgz
-RUN mv l_openvino_toolkit_ubuntu22_2024.4.0.16579.c3152d32c9c_x86_64 /opt/intel/openvino
+RUN mv openvino_toolkit_ubuntu22_2025.1.0.18503.6fec06580ab_x86_64 /opt/intel/openvino
 RUN cd /opt/intel/openvino && ./install_dependencies/install_openvino_dependencies.sh -y
 RUN cd /opt/intel/openvino && python3 -m pip install -r ./python/requirements.txt
 # Manually set ENV instead of `source /opt/intel/openvino/setupvars.sh`
@@ -42,17 +42,43 @@ RUN cd /tmp/onnxruntime/build/Linux/Release && \
     python3 /tmp/onnxruntime/setup.py bdist_wheel && \
     cp dist/*.whl $ORT_INSTALL_DIR
 
-# As opencv needed for onnxruntime, we build it here
-FROM opencv-cpu AS binary
-# FROM ubuntu:22.04 AS onnxruntime
+FROM ubuntu:22.04 AS onnxruntime
+# Creating a non-root user
+ARG USERNAME=dev
+ARG USER_UID=1000
+ARG USER_GID=1003
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    #
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    && apt-get update \
+    && apt-get install -y sudo git \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# [Optional] Set the default user. Omit if you want to keep the default as root.
+RUN mkdir -p /workspace && chown -R $USER_UID:$USER_GID /workspace
+USER $USERNAME
+
 ENV ORT_INSTALL_DIR=/onnxruntime
 COPY --from=build $ORT_INSTALL_DIR $ORT_INSTALL_DIR
 
-RUN sudo apt-get install -y python3 python3-pip
+# OpenCV
+ENV OPENCV_INSTALL_DIR=/opencv
+COPY --from=opencv-cpu $OPENCV_INSTALL_DIR $OPENCV_INSTALL_DIR
+
+RUN sudo apt-get install -y python3 python3-pip ffmpeg
 RUN pip3 install $ORT_INSTALL_DIR/*.whl
+
+# To use opencv in python
+RUN pip3 install numpy
+RUN sudo ln -s $OPENCV_INSTALL_DIR/lib/python3.10/dist-packages/cv2 /usr/local/lib/python3.10/dist-packages/cv2
 
 # OpenVINO
 COPY --from=build /opt/intel/openvino /opt/intel/openvino
 # RUN /opt/intel/openvino/install_dependencies/install_openvino_dependencies.sh -y
 RUN sudo apt-get install libtbb12 -y
 ENV LD_LIBRARY_PATH=/opt/intel/openvino/runtime/lib/intel64:${LD_LIBRARY_PATH:-}
+
+RUN sudo -H pip3 install cmake

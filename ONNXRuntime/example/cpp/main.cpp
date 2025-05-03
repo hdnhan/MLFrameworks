@@ -12,6 +12,7 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #ifdef USE_TENSORRT
@@ -105,7 +106,9 @@ class ONNXRuntime : public Base {
 #endif
         } else if (ep == "OpenVINOExecutionProvider") {
 #ifdef USE_OPENVINO
-            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(options, "CPU"));
+            std::unordered_map<std::string, std::string> op;
+            op["device_type"] = "CPU";
+            options.AppendExecutionProvider_OpenVINO_V2(op);
 #else
             spdlog::warn("OpenVINO is not supported.");
 #endif
@@ -174,7 +177,7 @@ class ONNXRuntime : public Base {
 };
 
 int main(int argc, char *argv[]) {
-    cxxopts::Options options("./build/main", "OpenCV C++ Example");
+    cxxopts::Options options("./build/main", "ONNXRuntime C++ Example");
     options.add_options()("h,help", "Show help")(
         "v,video", "Path to video file",
         cxxopts::value<std::string>()->default_value(rootDir + "/Assets/video.mp4"))(
