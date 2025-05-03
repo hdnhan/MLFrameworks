@@ -11,12 +11,6 @@ print("\nONNX...")
 model.export(format="onnx", device=device, opset=20)  # 12 OpenCV DNN 4.7.0
 
 print("\nTorchScript...")
-if torch.backends.mps.is_available():
-    model.export(format="torchscript", device="mps")
-    trace = torch.jit.load("yolov8n.torchscript")
-    trace = torch.jit.freeze(trace)
-    torch.jit.save(trace, "yolov8n_mps.torchscript")
-
 model.export(format="torchscript", device=device)
 trace = torch.jit.load("yolov8n.torchscript")
 trace = torch.jit.freeze(trace)

@@ -5,6 +5,7 @@ from invoke.context import Context
 
 folders_to_ignore = [
     "build/",
+    "libtorch/",
 ]
 
 
