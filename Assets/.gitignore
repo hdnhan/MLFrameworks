@@ -3,4 +3,3 @@
 *.engine
 *.mlmodelc
 *.mpsgraphpackage
-yolov8n_mps.torchscript
