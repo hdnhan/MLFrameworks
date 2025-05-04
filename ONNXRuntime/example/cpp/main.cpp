@@ -81,6 +81,7 @@ class ONNXRuntime : public Base {
   private:
     void setup_provider(Ort::SessionOptions &options, std::string const &ep) {
         options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+        // options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
         options.DisableProfiling();
 
         if (ep == "TensorrtExecutionProvider") {
@@ -114,9 +115,16 @@ class ONNXRuntime : public Base {
 #endif
         } else if (ep == "CoreMLExecutionProvider") {
 #ifdef USE_COREML
-            uint32_t coreml_flags = 0;
-            coreml_flags |= COREML_FLAG_ONLY_ENABLE_DEVICE_WITH_ANE;
-            Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CoreML(options, coreml_flags));
+            // https://onnxruntime.ai/docs/execution-providers/CoreML-ExecutionProvider.html
+            std::unordered_map<std::string, std::string> provider_options;
+            provider_options["ModelFormat"] = "NeuralNetwork";
+            provider_options["MLComputeUnits"] = "CPUAndNeuralEngine";
+            provider_options["RequireStaticInputShapes"] = "1";
+            provider_options["EnableOnSubgraphs"] = "0";
+            provider_options["AllowLowPrecisionAccumulationOnGPU"] = "1";
+            provider_options["SpecializationStrategy"] = "FastPrediction";
+            // provider_options["ModelCacheDirectory"] = "/tmp/__cache__";
+            options.AppendExecutionProvider("CoreML", provider_options);
 #else
             std::cout << "CoreML is not supported." << std::endl;
 #endif
