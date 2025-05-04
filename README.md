@@ -3,10 +3,10 @@ Run inference on `yolov8n` using
 - OpenCV: CPU and CUDA
 - ONNXRuntime: CPU, CUDA, CoreML, OpenVINO, TensorRT
 - TensorRT
-- CoreML
+- CoreML: CPU, GPU and Neural Engine
 - LibTorch: CPU, CUDA and MPS
 - OpenVINO: CPU and GPU
-- MNN
+- MNN: CPU, CUDA, Metal, CoreML and TensorRT
 - Triton Inference Server
 
 
