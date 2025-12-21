@@ -172,7 +172,7 @@ class Base:
 
     def warmup(self) -> None:
         logger.debug("Warm up started.")
-        image = np.random.rand(1, 3, 480, 640).astype(np.float32)
+        image = np.random.randint(0, 256, size=(480, 640, 3)).astype(np.uint8)
         new_shape = (640, 640)
         image = self.preprocess(image, new_shape)
         output = self.infer(image)
