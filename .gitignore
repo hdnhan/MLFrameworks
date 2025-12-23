@@ -3,4 +3,3 @@ __pycache__
 .vscode
 .ruff_cache
 Results
-Triton/model_repository/yolov8n/1/*

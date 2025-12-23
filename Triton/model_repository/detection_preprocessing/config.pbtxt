@@ -1,5 +1,6 @@
 name: "detection_preprocessing"
 backend: "python"
+default_model_filename: "model.py"
 max_batch_size: 0
 input [
     {
