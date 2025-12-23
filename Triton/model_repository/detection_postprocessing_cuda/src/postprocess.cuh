@@ -258,7 +258,7 @@ template <typename scale_t> class PostProcess {
         int threads_per_block = 256;
         int num_blocks = (num_boxes + threads_per_block - 1) / threads_per_block;
 
-        split_kernel<float>
+        split_kernel<scale_t>
             <<<num_blocks, threads_per_block>>>(src, bboxes, scores, class_ids, num_boxes, num_classes + 4);
         CUDA_CHECK(cudaGetLastError());
 
@@ -279,7 +279,7 @@ template <typename scale_t> class PostProcess {
             thrust::device_pointer_cast(bboxes + num_boxes), thrust::device_pointer_cast(scores + num_boxes),
             thrust::device_pointer_cast(class_ids + num_boxes)));
         // Sort in descending order based on scores
-        thrust::stable_sort(thrust::device(alloc), begin, end, Comparator<float>());
+        thrust::stable_sort(thrust::device(alloc), begin, end, Comparator<scale_t>());
         CUDA_CHECK(cudaGetLastError());
 
         /*
@@ -293,10 +293,10 @@ template <typename scale_t> class PostProcess {
               scores: [*]
               class_ids: [*]
         */
-        constexpr int kNmsBoxesPerThread = 32; // 8 * sizeof(int);
-        const int bit_mask_len = (num_boxes + kNmsBoxesPerThread - 1) / kNmsBoxesPerThread;
+        constexpr int kBitsPerMaskElement = 32; // 8 * sizeof(int);
+        const int bit_mask_len = (num_boxes + kBitsPerMaskElement - 1) / kBitsPerMaskElement;
 
-        nms_kernel<float><<<1, 1024, bit_mask_len * sizeof(int), 0>>>(
+        nms_kernel<scale_t><<<1, 1024, bit_mask_len * sizeof(int), 0>>>(
             bboxes, scores, class_ids, iou_threshold, score_threshold, bit_mask_len, num_boxes, max_num_boxes,
             accepted_num_boxes);
         CUDA_CHECK(cudaGetLastError());
@@ -308,7 +308,7 @@ template <typename scale_t> class PostProcess {
 
         threads_per_block = 32;
         num_blocks = (num_selected_boxes + threads_per_block - 1) / threads_per_block;
-        scale_boxes_kernel<float>
+        scale_boxes_kernel<scale_t>
             <<<num_blocks, threads_per_block>>>(bboxes, num_selected_boxes, origin_shape);
         CUDA_CHECK(cudaGetLastError());
     }
