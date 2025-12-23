@@ -59,24 +59,24 @@ ensemble_scheduling {
         }
     },
     {
-        model_name: "detection_postprocessing"
+        model_name: "detection_postprocessing_cuda"
         model_version: -1
         input_map {
             key: "detection_postprocessing_detections"
             value: "detections"
-        },
+        }
         input_map {
             key: "detection_postprocessing_shape"
             value: "shape"
-        },
+        }
         output_map {
             key: "detection_postprocessing_bboxes"
             value: "bboxes"
-        },
+        }
         output_map {
             key: "detection_postprocessing_scores"
             value: "scores"
-        },
+        }
         output_map {
             key: "detection_postprocessing_ids"
             value: "ids"

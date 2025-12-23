@@ -1,6 +1,6 @@
-name: "detection_postprocessing"
-backend: "python"
-default_model_filename: "model.py"
+name: "detection_postprocessing_cuda"
+backend: "detection_postprocessing_cuda"
+runtime: "libtriton_postprocess.so"
 max_batch_size: 0
 input [
     {
@@ -33,4 +33,4 @@ output [
     }
 ]
 
-instance_group [{ kind: KIND_CPU }]
+instance_group [{ kind: KIND_GPU }]

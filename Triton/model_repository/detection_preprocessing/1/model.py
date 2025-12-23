@@ -51,6 +51,7 @@ class TritonPythonModel:
             image = pb_utils.get_input_tensor_by_name(request, "detection_preprocessing_input").as_numpy()
             shape = np.array([image.shape[0], image.shape[1]])  # (height, width)
             image = preprocess(image, (640, 640))
+            image = image.copy()
 
             output_tensor = pb_utils.Tensor("detection_preprocessing_output", image.astype(self.output_dtype))
             shape_tensor = pb_utils.Tensor("detection_preprocessing_shape", shape.astype(self.shape_dtype))
