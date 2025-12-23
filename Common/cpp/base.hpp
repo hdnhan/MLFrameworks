@@ -12,9 +12,9 @@ class Base {
     Base() = default;
     virtual ~Base() = default;
 
-  private:
+  protected:
     // Preprocess an image to cvImage of shape newShape.
-    void preprocess(cv::Mat const &image, cv::Size const &newShape);
+    virtual void preprocess(cv::Mat const &image, cv::Size const &newShape);
 
     // Run inference on cvImage and store all results in outputs.
     virtual void infer() = 0;
@@ -23,6 +23,7 @@ class Base {
     void postprocess(cv::Size const &newShape, cv::Size const &oriShape, float confThres = 0.25,
                      float iouThres = 0.45);
 
+  private:
     // Visualize results on original image using bboxes, scores, and classIDs.
     void draw(cv::Mat &image);
 

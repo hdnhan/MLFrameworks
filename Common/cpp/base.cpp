@@ -144,7 +144,7 @@ void Base::run(std::string const &video_path, std::string const &save_path) {
         end = std::chrono::high_resolution_clock::now();
         t_pre = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_pres += t_pre;
-        spdlog::debug("Preprocess time: {} ms", t_pre / 1e3);
+        spdlog::debug("Preprocess : {:0.3f} ms", t_pre / 1e3);
 
         // Inference
         start = std::chrono::high_resolution_clock::now();
@@ -152,7 +152,7 @@ void Base::run(std::string const &video_path, std::string const &save_path) {
         end = std::chrono::high_resolution_clock::now();
         t_infer = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_infers += t_infer;
-        spdlog::debug("Inference time: {} ms", t_infer / 1e3);
+        spdlog::debug("Inference  : {:0.3f} ms", t_infer / 1e3);
 
         // Postprocess
         start = std::chrono::high_resolution_clock::now();
@@ -160,12 +160,12 @@ void Base::run(std::string const &video_path, std::string const &save_path) {
         end = std::chrono::high_resolution_clock::now();
         t_post = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         t_posts += t_post;
-        spdlog::debug("Postprocess time: {} ms", t_post / 1e3);
+        spdlog::debug("Postprocess: {:0.3f} ms", t_post / 1e3);
 
         // Draw
         draw(frame);
         double fps = 1e6 / (t_pre + t_infer + t_post);
-        spdlog::debug("FPS: {}", fps);
+        spdlog::debug("FPS        : {:0.2f}", fps);
         std::string fps_str = cv::format("FPS: %.2f", fps);
         cv::putText(frame, fps_str, cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
@@ -180,8 +180,8 @@ void Base::run(std::string const &video_path, std::string const &save_path) {
     if (writer.isOpened())
         writer.release();
 
-    spdlog::info("Preprocess: {} ms, Inference: {} ms, Postprocess: {} ms", t_pres / 1e3 / count,
-                 t_infers / 1e3 / count, t_posts / 1e3 / count);
-    spdlog::info("FPS: {} ms", 1e6 * count / (t_pres + t_infers + t_posts));
+    spdlog::info("Preprocess: {:0.3f} ms, Inference: {:0.3f} ms, Postprocess: {:0.3f} ms",
+                 t_pres / 1e3 / count, t_infers / 1e3 / count, t_posts / 1e3 / count);
+    spdlog::info("FPS: {:0.2f} ms", 1e6 * count / (t_pres + t_infers + t_posts));
     spdlog::info("Run completed.");
 }

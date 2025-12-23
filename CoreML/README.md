@@ -24,22 +24,22 @@ SPDLOG_LEVEL=info ./build/main
   </tr>
   <tr>
     <td>FPS</td>
-    <td>60.47</td>
-    <td>165.21</td>
+    <td>96.22</td>
+    <td>179.99</td>
   </tr>
   <tr>
     <td>Preprocess</td>
-    <td>2.491 ms</td>
-    <td>2.283 ms</td>
+    <td>1.301 ms</td>
+    <td>2.184 ms</td>
   </tr>
   <tr>
     <td>Inference</td>
-    <td>8.458 ms</td>
-    <td>2.400 ms</td>
+    <td>3.858 ms</td>
+    <td>2.064 ms</td>
   </tr>
   <tr>
     <td>Postprocess</td>
-    <td>5.589 ms</td>
-    <td>1.370 ms</td>
+    <td>5.234 ms</td>
+    <td>1.308 ms</td>
   </tr>
 </table>

@@ -8,7 +8,8 @@ git clone --recursive -b $OPENCV_RELEASE_TAG https://github.com/opencv/opencv_co
 
 # Create a (miniconda) virtual environment and activate it
 pip install "cmake<4" numpy
-brew install pkg-config ffmpeg # check: brew list
+brew install pkg-config ffmpeg@7 # check: brew list
+brew unlink ffmpeg@7 && brew link --force ffmpeg@7
 
 cd /tmp/git/opencv && mkdir -p build && cd build && \
 cmake -S .. -B . \
