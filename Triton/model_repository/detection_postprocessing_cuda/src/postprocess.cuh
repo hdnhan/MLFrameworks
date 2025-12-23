@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cub/cub.cuh>
 #include <cuda_runtime.h>
 #include <iostream>
+#include <thrust/device_allocator.h>      // device_allocator
 #include <thrust/device_ptr.h>            // device_pointer_cast
 #include <thrust/execution_policy.h>      // device
 #include <thrust/iterator/zip_iterator.h> // make_zip_iterator
@@ -19,8 +19,8 @@
     }
 
 template <typename scale_t, unsigned int TILE_DIM>
-__global__ void tranpose_kernel(scale_t const *__restrict__ src, scale_t *__restrict__ dst, int rows,
-                                int cols) {
+__global__ void transpose_kernel(scale_t const *__restrict__ src, scale_t *__restrict__ dst, int rows,
+                                 int cols) {
     __shared__ scale_t tile[TILE_DIM][TILE_DIM + 1]; // +1 to avoid bank conflicts
 
     int x = blockIdx.x * TILE_DIM + threadIdx.x;
@@ -73,7 +73,7 @@ __global__ void split_kernel(scale_t const *__restrict__ src, BBox<scale_t> *__r
     bboxes[idx] = BBox<scale_t>({bbox.x1 - bbox.x2 * 0.5f, bbox.y1 - bbox.y2 * 0.5f, bbox.x1 + bbox.x2 * 0.5f,
                                  bbox.y1 + bbox.y2 * 0.5f});
 
-    // next elements (num_boxes - 4) is score
+    // next elements (cols - 4) are scores for each class
     scale_t max_score = src[idx * cols + 4];
     int max_class_id = 0;
     for (int i = 5; i < cols; ++i) {
@@ -178,6 +178,38 @@ __global__ void scale_boxes_kernel(BBox<scale_t> *__restrict__ bboxes, int num_s
     bboxes[idx] = box;
 }
 
+// https://forums.developer.nvidia.com/t/is-there-a-similar-temporary-allocation-feature-like-cub-for-thrusts-thrust-sort-by-key/312583
+// https://github.com/NVIDIA/cccl/blob/main/thrust/examples/cuda/custom_temporary_allocation.cu
+template <typename T> class CachingAllocator : public thrust::device_allocator<T> {
+  public:
+    CachingAllocator() {}
+
+    ~CachingAllocator() {
+        if (_ptr)
+            thrust::device_allocator<T>::deallocate(_ptr, _size);
+        _size = 0;
+        _ptr = nullptr;
+    }
+
+    thrust::device_ptr<T> allocate(size_t n) {
+        if (_ptr && _size >= n)
+            return _ptr;
+        if (_ptr)
+            thrust::device_allocator<T>::deallocate(_ptr, _size);
+        _size = n;
+        _ptr = thrust::device_allocator<T>::allocate(n);
+        return _ptr;
+    }
+
+    void deallocate(thrust::device_ptr<T> p, size_t n) {
+        // Do not deallocate memory here, we will manage it ourselves
+    }
+
+  private:
+    size_t _size = 0;
+    thrust::device_ptr<T> _ptr = nullptr;
+};
+
 template <typename scale_t> class PostProcess {
   public:
     PostProcess(int num_classes, int num_boxes) : num_classes(num_classes), num_boxes(num_boxes) {
@@ -211,7 +243,7 @@ template <typename scale_t> class PostProcess {
         dim3 blockDim(16, 16); // 16 * 16 = 256 threads per block
         dim3 gridDim((num_boxes + blockDim.x - 1) / blockDim.x,
                      (num_classes + 4 + blockDim.y - 1) / blockDim.y);
-        tranpose_kernel<scale_t, 16><<<gridDim, blockDim>>>(input, src, num_classes + 4, num_boxes);
+        transpose_kernel<scale_t, 16><<<gridDim, blockDim>>>(input, src, num_classes + 4, num_boxes);
         CUDA_CHECK(cudaGetLastError());
 
         /*
@@ -247,7 +279,7 @@ template <typename scale_t> class PostProcess {
             thrust::device_pointer_cast(bboxes + num_boxes), thrust::device_pointer_cast(scores + num_boxes),
             thrust::device_pointer_cast(class_ids + num_boxes)));
         // Sort in descending order based on scores
-        thrust::stable_sort(thrust::device, begin, end, Comparator<float>());
+        thrust::stable_sort(thrust::device(alloc), begin, end, Comparator<float>());
         CUDA_CHECK(cudaGetLastError());
 
         /*
@@ -286,6 +318,8 @@ template <typename scale_t> class PostProcess {
     int num_boxes;
     scale_t *src;
     int *accepted_num_boxes;
+
+    CachingAllocator<char> alloc;
 
   public:
     BBox<scale_t> *bboxes;

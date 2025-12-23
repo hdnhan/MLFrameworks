@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(triton_vectoradd_backend LANGUAGES C CXX)
+project(triton_detection_postprocessing_backend LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -19,17 +19,17 @@ include(FetchContent)
 FetchContent_Declare(
   repo-common
   GIT_REPOSITORY https://github.com/triton-inference-server/common.git
-  GIT_TAG "main"
+  GIT_TAG "r25.12"
 )
 FetchContent_Declare(
   repo-core
   GIT_REPOSITORY https://github.com/triton-inference-server/core.git
-  GIT_TAG "main"
+  GIT_TAG "r25.12"
 )
 FetchContent_Declare(
   repo-backend
   GIT_REPOSITORY https://github.com/triton-inference-server/backend.git
-  GIT_TAG "main"
+  GIT_TAG "r25.12"
 )
 FetchContent_MakeAvailable(repo-common repo-core repo-backend)
 
