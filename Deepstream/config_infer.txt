@@ -42,7 +42,7 @@ infer_config {
     }
 
     custom_lib {
-        path: "/workspace/Deepstream/libnvds_infercustomparser.so"
+        path: "./libnvds_infercustomparser.so"
     }
 }
 

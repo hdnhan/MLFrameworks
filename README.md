@@ -8,6 +8,7 @@ Run inference on `yolov8n` using
 - OpenVINO: CPU and GPU
 - MNN: CPU, CUDA, Metal, CoreML and TensorRT
 - Triton Inference Server
+- DeepStream
 
 
 ## Generate required files

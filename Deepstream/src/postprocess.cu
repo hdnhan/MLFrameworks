@@ -64,6 +64,9 @@ bool NvDsInferParseCustomPostprocess(std::vector<NvDsInferLayerInfo> const &laye
         res.top = CLIP(y1, 0, network_info.height - 1);
         res.width = CLIP(x2 - x1, 0, network_info.width - res.left - 1);
         res.height = CLIP(y2 - y1, 0, network_info.height - res.top - 1);
+        if (res.width <= 0.0f || res.height <= 0.0f)
+            continue; // skip invalid boxes
+
         res.detectionConfidence = static_cast<float *>(scores->buffer)[i];
         res.classId = static_cast<unsigned int>(static_cast<int32_t *>(ids->buffer)[i]);
         object_detection_info.push_back(res);
