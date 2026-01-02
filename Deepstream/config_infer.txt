@@ -1,0 +1,57 @@
+infer_config {
+    unique_id: 1
+    gpu_ids: [0]
+    max_batch_size: 0
+    backend {
+        inputs: [
+            {name: "image"}
+        ]
+        outputs: [
+            {name: "bboxes"},
+            {name: "scores"},
+            {name: "ids"}
+        ]
+        triton {
+            model_name: "ensemble"
+            version: -1
+            model_repo {
+                root: "../Triton/model_repository"
+                strict_model_config: true
+            }
+        }
+    }
+
+    # https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvdspreprocess.html
+    preprocess {
+        network_format: IMAGE_FORMAT_RGB
+        tensor_order: TENSOR_ORDER_NHWC
+    }
+
+    # https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvdspostprocess.html
+    postprocess {
+        labelfile_path: "labels.txt"
+        detection {
+            num_detected_classes: 80
+            custom_parse_bbox_func: "NvDsInferParseCustomPostprocess"
+        }
+    }
+
+    extra {
+        copy_input_to_host_buffers: false
+        output_buffer_pool_size: 2
+    }
+
+    custom_lib {
+        path: "./libnvds_infercustomparser.so"
+    }
+}
+
+input_control {
+    process_mode: PROCESS_MODE_FULL_FRAME
+    operate_on_gie_id: -1
+    interval: 0
+}
+
+output_control {
+    output_tensor_meta: true
+}

@@ -59,7 +59,7 @@ if __name__ == "__main__":
     verbose = False
 
     for _ in range(10):
-        frame = np.random.randint(0, 255, size=(480, 640, 3), dtype=np.uint8)
+        frame = np.random.randint(0, 255, size=(1080, 1920, 3), dtype=np.uint8)
         bboxes, scores, class_ids = run(client, frame)
 
     # Load video

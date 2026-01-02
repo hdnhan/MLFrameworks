@@ -17,30 +17,29 @@ enable_language(CUDA)
 
 include(FetchContent)
 FetchContent_Declare(
-  repo-common
-  GIT_REPOSITORY https://github.com/triton-inference-server/common.git
-  GIT_TAG "r25.12"
+    repo-common
+    GIT_REPOSITORY https://github.com/triton-inference-server/common.git
+    GIT_TAG "r25.12"
 )
 FetchContent_Declare(
-  repo-core
-  GIT_REPOSITORY https://github.com/triton-inference-server/core.git
-  GIT_TAG "r25.12"
+    repo-core
+    GIT_REPOSITORY https://github.com/triton-inference-server/core.git
+    GIT_TAG "r25.12"
 )
 FetchContent_Declare(
-  repo-backend
-  GIT_REPOSITORY https://github.com/triton-inference-server/backend.git
-  GIT_TAG "r25.12"
+    repo-backend
+    GIT_REPOSITORY https://github.com/triton-inference-server/backend.git
+    GIT_TAG "r25.12"
 )
 FetchContent_MakeAvailable(repo-common repo-core repo-backend)
 
 add_library(
-  triton_postprocess SHARED
-  src/main.cu
+    triton_postprocess SHARED
+    src/main.cu
 )
 
 target_link_libraries(
-  triton_postprocess
-  PRIVATE
+    triton_postprocess PRIVATE
     triton-core-serverapi
     triton-core-backendapi
     triton-core-serverstub
@@ -48,8 +47,8 @@ target_link_libraries(
 )
 
 set_target_properties(
-  triton_postprocess PROPERTIES
-  POSITION_INDEPENDENT_CODE ON
-  CUDA_SEPARABLE_COMPILATION ON
-  CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    triton_postprocess PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
