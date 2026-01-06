@@ -53,5 +53,5 @@ input_control {
 }
 
 output_control {
-    output_tensor_meta: true
+    
 }
