@@ -62,5 +62,15 @@ interval=0
 gie-unique-id=1
 config-file=config_infer.txt
 
+# https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvtracker.html
+[tracker]
+enable=1
+gpu-id=0
+tracker-width=960
+tracker-height=544
+display-tracking-id=1
+ll-lib-file=/opt/nvidia/deepstream/deepstream/lib/libnvds_nvmultiobjecttracker.so
+ll-config-file=/opt/nvidia/deepstream/deepstream/samples/configs/deepstream-app/config_tracker_NvDCF_perf.yml
+
 [tests]
 file-loop=0

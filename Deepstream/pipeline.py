@@ -21,7 +21,7 @@ Gst.init(None)
 def bus_call(bus, message, loop):
     t = message.type
     if t == Gst.MessageType.EOS:
-        logger.error("End-of-stream")
+        logger.info("End-of-stream")
         loop.quit()
     elif t == Gst.MessageType.WARNING:
         err, debug = message.parse_warning()
@@ -140,7 +140,6 @@ if __name__ == "__main__":
         logger.info("Main loop finished")
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
-        pass
 
     logger.info("Setting pipeline to NULL state")
     pipeline.set_state(Gst.State.NULL)
